@@ -29,7 +29,8 @@ destination:
   journals mutations, making any page a serializable delta over a pristine
   base. This is the org's destination; Track A is the proving ground (the
   blob format, progressive restore, and lifecycle APIs are designed so Track
-  B inherits them, not re-invents them).
+  B inherits them, not re-invents them). Track B is the engine seed of the
+  full stateless browser rebuild — see `docs/specs/stateless-browser.md`.
 
 Success criteria (each is a benchmark gate, not a vibe):
 

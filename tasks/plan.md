@@ -13,6 +13,12 @@ A **third track** — Track C, the stateless FOSS family (spec:
 standalone FOSS projects anyone can adopt. Spec'd now; implementation gates
 on Track A dogfooding (P5).
 
+A **fourth track** — Track D, the stateless browser rebuild (spec:
+`docs/specs/stateless-browser.md`, issue #9) — the org's destination: a
+ground-up browser where the stateless model is the architecture. Track B's
+engine research (phase 6) is its gate; Track D consumes the tab-runtime,
+ticket, and family work rather than replacing it.
+
 ## Dependency graph
 
 ```
@@ -27,13 +33,20 @@ Track B — tab runtime (long-term):  managed as tickets via the tool
                                                           │
 Track C — FOSS family (after A's P5 dogfood gate):
   C1 (stateless-issues) ──► C2 (stateless-actions) ──► C3 (stateless-queue)
+
+Track D — stateless browser (destination; gated on B's engine research):
+  B:phase-6 (audit-layer research) ──► D1 (engine prototype) ──► D2 (base/delta)
+  ──► D3 (stateless browser) ──► D4 (dogfood daily driver)
 ```
 
 Track A phases are the work of issues #5 (spec — done), #6 (CLI), #7
 (Action). Track B reuses the tab-runtime plan's phases but only after Track A
 is dogfooding. Track C implements `docs/specs/foss-projects.md` (issue #8):
 each project spec'd, implementation starts when Track A P5 lands — the family
-must dogfood on the flow it ships.
+must dogfood on the flow it ships. Track D implements
+`docs/specs/stateless-browser.md` (issue #9): spec'd now, engine work starts
+only when Track B's phase-6 research settles the audit-layer strategy and
+engine choice — the rebuild is research-gated by design, never vibes.
 
 ## Track A — Stateless tickets (immediate)
 
@@ -126,6 +139,33 @@ published Actions, `docs/specs/projects/stateless-actions.md`),
 - Track C starts only when Track A P5 lands (the family dogfoods on the
   flow it ships). Each project files its own issues via the flow.
 
+## Track D — Stateless browser rebuild (destination, research-gated)
+
+Implements `docs/specs/stateless-browser.md` (issue #9): a ground-up browser
+where the stateless model is the architecture — base/delta runtime,
+journal-everything audit layer, down-is-default tab manager, subsystems as
+stateless services, progressive restore, versioned storage, determinism.
+
+- **D0 — evidence & prerequisites:** tab-runtime Track A phases 0–5
+  (blob format, hibernation service, progressive restore, webshell control
+  plane, benchmark gates) are the browser's first five phases — the rebuild
+  is not a fresh start, it inherits the proven work.
+- **D1 — engine prototype:** Track B's phase 6 (audit-layer research) picks
+  record-replay vs heap snapshot and the engine base (recommended:
+  memory-safe, embeddable, Servo-class — not a Chromium fork). Phase 7 of
+  the tab-runtime plan builds the journal-everything prototype; gate =
+  replay bit-stable on fixtures.
+- **D2 — base/delta runtime:** immutable shared base + per-tab deltas; gate
+  = N tabs ≈ delta memory, not N pages.
+- **D3 — stateless browser:** subsystems as services, down-is-default, the
+  9 benchmarks (plus replay-bitstable, base-sharing, wasm-fallback) as CI
+  gates.
+- **D4 — dogfood:** the org's daily driver runs on it; survival-matrix 7/7
+  at scale.
+- Track D starts when Track B phase 6 lands. It is a multi-year,
+  research-gated program; every phase is falsifiable (benchmark gates), no
+  phase proceeds on vibes.
+
 ## Risks & mitigations
 
 | Risk | Mitigation |
@@ -138,6 +178,9 @@ published Actions, `docs/specs/projects/stateless-actions.md`),
 | `notes/` personal exports pushed publicly | Boundary rule + review gate before any push (unchanged) |
 | Family projects drift from the core contract | `stateless-queue` core is the single source; CI fails on mismatch; all three dogfood |
 | FOSS adoption friction (forge lock-in, install) | Tier-1 Actions funnel; forge-agnostic core; `gh extension` + npm install paths |
+| Browser rebuild scope (multi-year) | Research-gated: phase-6 audit-layer design decides the engine; every phase is benchmark-falsifiable |
+| Heap serialization unproven (the make-or-break) | Record-replay vs heap snapshot decided by research, prototyped in D1 before any engine commitment |
+| Engine choice paralysis | Spec recommends Servo-class memory-safe embeddable; the research deliverable is a decision, not a survey |
 
 ## Verification checkpoints (each phase)
 
@@ -155,4 +198,6 @@ fixed — both implement the same contract. P4 depends on P2 only. P5 is
 strictly last (CI gate + dogfood). Track B starts only after P5. Track C
 starts after P5 too: C1 and C2 are parallel (both extract from Track A's
 P1–P3 output); C3 (queue core) starts when C1 lands (it owns the core) and
-runs alongside C2.
+runs alongside C2. Track D is strictly sequential after Track B phase 6 —
+the audit-layer research is the single gate; nothing in D proceeds before
+its decision lands.

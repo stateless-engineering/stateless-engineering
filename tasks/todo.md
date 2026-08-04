@@ -163,3 +163,63 @@ review.
 Three family repos live under the org, each dogfooding the flow; GitHub +
 GitLab verb parity; ≥ 5 external adopters; family specs' success gates met.
 Nothing pushed to the public monorepo's `notes/` without review.
+
+## Track D — Stateless browser rebuild (destination, research-gated)
+
+Per `docs/specs/stateless-browser.md` (#9). Spec'd and issue #9 tracked;
+engine work starts only when Track B phase 6 (audit-layer research) lands.
+Each task below is the browser's phase gate — benchmark-falsifiable, never
+vibes.
+
+### D0 — prerequisites (inherit from the tab-runtime track)
+
+- [ ] Task: tab-runtime Track A phases 0–5 land first (blob, hibernation,
+      progressive restore, webshell control plane, 12/12 gates)
+  - Acceptance: the browser's first five phases are proven work, not fresh starts
+  - Verify: tab-runtime plan checkpoints green
+  - Files: per tab-runtime plan
+
+### D1 — engine prototype (gated on B:phase-6 research)
+
+- [ ] Task: audit-layer research decision (record-replay vs heap snapshot; engine base)
+  - Acceptance: `docs/specs/audit-layer.md` concludes with a decision + rationale; engine choice made (Servo-class recommended, not Chromium fork)
+  - Verify: doc reviewed; decision recorded in the issue
+  - Files: `docs/specs/audit-layer.md`
+
+- [ ] Task: journal-everything engine prototype
+  - Acceptance: audit layer is a core subsystem (not a bolt-on); captures + replays a fixture page
+  - Verify: replay bit-stable on fixtures (same blob → identical DOM + state)
+  - Files: engine repo (org) — per the phase-6 decision
+
+### D2 — base/delta runtime
+
+- [ ] Task: immutable shared base + per-tab deltas
+  - Acceptance: N tabs share one base; per-tab cost = delta, not page
+  - Verify: `base-sharing` gate — memory proves the sharing
+  - Files: engine repo
+
+### D3 — stateless browser
+
+- [ ] Task: subsystems as stateless services (network, storage, rendering, permissions, downloads)
+  - Acceptance: no long-lived stateful daemons; every subsystem is an invocation; permission/download are services
+  - Verify: benchmark suite as CI gates (9 existing + replay-bitstable, base-sharing, wasm-fallback)
+  - Files: engine repo
+
+- [ ] Task: down-is-default tab manager + progressive restore
+  - Acceptance: background tab = blob at rest (0 RSS); open = shell < 100 ms, full < 300 ms
+  - Verify: memory-delta, tab-spray, snap-restore, network-skip gates green
+  - Files: engine repo
+
+### D4 — dogfood
+
+- [ ] Task: the org's daily driver runs on the stateless browser
+  - Acceptance: survival-matrix 7/7 at scale; crash = nothing lost (blob on disk)
+  - Verify: full benchmark suite green on the browser; real usage week
+  - Files: engine repo
+
+## Definition of done (Track D)
+
+A working browser, FOSS (MIT), benchmark-gated, whose every phase descended
+from a falsifiable gate — and which the org actually uses. WASM fallback is
+controlled and counted, never silent. Nothing personal pushed anywhere
+public.
