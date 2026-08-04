@@ -39,6 +39,7 @@ Success criteria:
 | `stateless-actions` | spec'd (#7) | `projects/stateless-actions.md` | published Actions on issue events | one workflow file |
 | `stateless-queue` | spec'd (#8, this family) | `projects/stateless-queue.md` | lib: `Queue` core + pluggable backends | `npm i` + one binding |
 | `stateless-runtime` | spec'd (flagship) | `stateless-tab-runtime.md` | tab hibernation service + blobs | n/a (consumer) |
+| `stateless-browser` | spec'd (#9) | `stateless-browser.md` | ground-up stateless browser | the destination |
 
 Relation: `stateless-queue` is the **core** (state machine, sort,
 normalizer — forge-agnostic). `stateless-issues` is the **GitHub binding**
@@ -46,6 +47,11 @@ as a user-facing CLI. `stateless-actions` is the **event surface** — it
 reacts to the same state machine without running a CLI at all. `queue`
 ships first as a lib inside `stateless-issues`; it becomes its own repo
 when a second binding lands (GitLab).
+
+The **destination** project is `stateless-browser` (issue #9): a ground-up
+browser rebuilt so the stateless model is the architecture. It inherits the
+family's tooling (ticket flow runs the build), the runtime spec's engine
+research (Track B), and the benchmark suite as its acceptance contract.
 
 ## The shared stateless contract
 
