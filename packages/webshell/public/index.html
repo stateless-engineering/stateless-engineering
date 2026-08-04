@@ -117,7 +117,7 @@ function addStep(appName) {
   s.className = 'step';
   s.innerHTML = `<select class="pick">${APP_LIST.map(a =>
       `<option value="${a.name}">${a.name} (${a.origin})</option>`).join('')}</select>
-    <input class="args" placeholder='args JSON, e.g. ["--json","../../benchmarks"] (optional)'>
+    <input class="args" placeholder='args JSON, e.g. ["--json","../benchmarks"] (optional)'>
     <button class="rm">remove</button>`;
   if (appName) s.querySelector('.pick').value = appName;
   s.querySelector('.rm').onclick = () => s.remove();

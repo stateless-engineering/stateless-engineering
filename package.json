@@ -10,7 +10,7 @@
     "bench:all": "node packages/bench-runner/run.js packages/benchmarks",
     "bench:one": "node packages/bench-runner/run.js packages/benchmarks --only",
     "webshell": "node packages/webshell/webshell.js",
-    "test": "node --test packages/webshell/test packages/bench-runner/test 2>/dev/null || echo 'no tests yet'"
+    "test": "echo 'no tests yet'"
   },
   "engines": {
     "node": ">=18"

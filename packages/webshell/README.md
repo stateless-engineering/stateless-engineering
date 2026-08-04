@@ -25,14 +25,15 @@ An app is a directory with an `app.json` manifest:
 - Legacy benchmark directories (a `bench.js`, no manifest) are discovered
   automatically as `entry: ["node", "bench.js"]`.
 - Apps are discovered by **path resolution** over three roots: this repo's
-  `apps/`, `--apps` (default `../benchmarks`), and `--services` (default
-  `../services`). There is no registry to register with — drop a directory
-  with a manifest on disk and it appears.
+  `apps/`, `--apps` (default `packages/benchmarks`), and `--services` (default
+  `packages/` — the sibling package store, where `bench-runner` and
+  `formatting` live). There is no registry to register with — drop a
+  directory with a manifest on disk and it appears.
 
 ## Run it
 
 ```bash
-git clone --recurse-submodules https://github.com/stateless-engineering/stateless-engineering.git
+git clone https://github.com/stateless-engineering/stateless-engineering.git
 cd stateless-engineering
 npm install                 # hoists puppeteer (benchmarks) to the workspace root
 node packages/webshell/webshell.js   # --port 8080 to pin; ephemeral by default
@@ -53,7 +54,7 @@ commands on your machine.
 | `GET /apps` | discovered apps (name, description, entry, origin) |
 | `GET /settings` | effective runtime config: port, roots, overrides, health |
 | `POST /settings` | session-scoped root repointing (`{"apps": "...", "services": "..."}`) — never persisted |
-| `GET /health` | root + submodule status; 503 with remediation when something's missing |
+| `GET /health` | root + package status; 503 with remediation when something's missing |
 | `POST /run/:app` | spawn the app (`{"args": [...]}`), stream stdout/stderr, `[exit N]` |
 | `POST /wire` | run a pipeline — each step's stdout becomes the next step's stdin |
 
@@ -66,7 +67,7 @@ non-zero. The flagship wiring:
 ```json
 {
   "steps": [
-    { "app": "bench-runner", "args": ["--json", "../../benchmarks"] },
+    { "app": "bench-runner", "args": ["--json", "../benchmarks"] },
     { "app": "summary" },
     { "app": "formatting" }
   ]

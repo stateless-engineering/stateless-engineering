@@ -17,8 +17,8 @@
  *     no ambient state
  *
  * The summary renders through the `formatting` package (pretty box table,
- * colored status chips); it degrades to plain text if the submodule hasn't
- * been checked out (git clone --recurse-submodules / git submodule update).
+ * colored status chips); it degrades to plain text if the sibling
+ * `formatting` package isn't present (partial monorepo checkout).
  *
  * Usage:
  *   bench-runner [DIR] [--json] [--only a,b] [--timeout SECS]

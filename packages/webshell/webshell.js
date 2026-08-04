@@ -9,8 +9,9 @@
  *
  * Stateless service model:
  *   - Discovery = path resolution, not a registry. Roots: this repo's
- *     `apps/`, plus `--apps` (default ../benchmarks) and `--services`
- *     (default ../services); GET /apps lists what's discoverable.
+ *     `apps/`, plus `--apps` (default packages/benchmarks) and `--services`
+ *     (default packages/ — the sibling package store); GET /apps lists
+ *     what's discoverable.
  *   - "Down" is the default state: every app is spawned on demand per
  *     request and gated on readiness (exit code). The only real failure is
  *     a missing piece on disk, surfaced via /health and a 503 with
@@ -20,7 +21,7 @@
  *     stage is a fresh stateless process.
  *
  * Usage:
- *   node server.js [--port 0] [--apps ../../packages/benchmarks] [--services ../../packages]
+ *   node webshell.js [--port 0] [--apps ../../packages/benchmarks] [--services ../../packages]
  */
 'use strict';
 
@@ -115,13 +116,13 @@ function health() {
       present: !!runner,
       note: runner
         ? 'app: spawns every bench.js and aggregates RESULT_JSON'
-        : 'missing: git submodule update --init --recursive in ../benchmarks and ../services',
+        : 'missing: packages/bench-runner not discovered — is the monorepo checkout complete?',
     },
     formatting: {
       present: !!formatting,
       note: formatting
         ? 'app: pretty tables from JSON on stdin (wire target)'
-        : 'missing: services/formatting submodule not checked out',
+        : 'missing: packages/formatting not discovered — is the monorepo checkout complete?',
     },
   };
 }
@@ -285,6 +286,6 @@ server.listen(PORT, '127.0.0.1', () => {
   const h = health();
   console.log(`webshell: http://127.0.0.1:${addr.port}  (ephemeral port; pin with --port)`);
   console.log(`  apps:       ${h.apps.count} discovered ${JSON.stringify(h.apps.byOrigin)}`);
-  console.log(`  runner:     ${h.runner.present ? 'ok' : 'MISSING — git submodule update --init --recursive'}`);
-  console.log(`  formatting: ${h.formatting.present ? 'ok' : 'missing — services/formatting not checked out'}`);
+  console.log(`  runner:     ${h.runner.present ? 'ok' : 'MISSING — packages/bench-runner not discovered'}`);
+  console.log(`  formatting: ${h.formatting.present ? 'ok' : 'missing — packages/formatting not discovered'}`);
 });
