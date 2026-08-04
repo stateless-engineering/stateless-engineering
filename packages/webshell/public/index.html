@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>webshell — stateless app runtime &amp; compositor</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: #0d1117; color: #c9d1d9; }
+  header { padding: 14px 18px; border-bottom: 1px solid #21262d; }
+  h1 { margin: 0; font-size: 16px; color: #f0f6fc; }
+  h1 span { color: #58a6ff; }
+  #health { margin-top: 6px; font-size: 12px; color: #8b949e; }
+  .chip { display: inline-block; padding: 0 8px; border-radius: 10px; font-size: 11px;
+          margin-right: 6px; }
+  .chip.ok { background: #1c4522; color: #3fb950; }
+  .chip.bad { background: #5c1a1a; color: #f85149; }
+  main { display: grid; grid-template-columns: 340px 1fr; min-height: calc(100vh - 70px); }
+  aside { border-right: 1px solid #21262d; padding: 12px; overflow-y: auto; }
+  section { margin-bottom: 16px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #8b949e;
+       margin: 12px 0 8px; }
+  .app { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 6px; }
+  .app:hover { background: #161b22; }
+  .app .name { cursor: pointer; color: #58a6ff; }
+  .app .name:hover { text-decoration: underline; }
+  .app .origin { font-size: 10px; color: #6e7681; margin-left: auto; }
+  .app .desc { font-size: 11px; color: #6e7681; width: 100%; }
+  input, textarea, button, select { background: #161b22; color: #c9d1d9; border: 1px solid #30363d;
+        border-radius: 6px; font: inherit; padding: 4px 8px; }
+  button { cursor: pointer; }
+  button:hover { border-color: #58a6ff; }
+  .args { width: 100%; margin: 4px 0; font-size: 12px; }
+  .step { border: 1px solid #21262d; border-radius: 6px; padding: 6px; margin-bottom: 6px; }
+  #out { white-space: pre-wrap; padding: 14px; margin: 0; overflow-y: auto; }
+  #out .ok { color: #3fb950; } #out .bad { color: #f85149; }
+  .actions { margin: 8px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>webshell — <span>stateless app runtime &amp; compositor</span></h1>
+  <div id="health">loading…</div>
+</header>
+<main>
+  <aside>
+    <section>
+      <h2>Apps (click a name to run)</h2>
+      <div id="apps"></div>
+    </section>
+    <section>
+      <h2>Wire a pipeline</h2>
+      <div id="steps"></div>
+      <div class="actions">
+        <button id="add-step">+ add step</button>
+        <button id="run-wire" style="float:right">▶ run pipeline</button>
+      </div>
+    </section>
+    <section>
+      <h2>Settings <span id="port-note" style="font-size:11px;color:#6e7681"></span></h2>
+      <div id="settings"></div>
+    </section>
+  </aside>
+  <pre id="out">— nothing run yet. click an app or build a pipeline —</pre>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+let APP_LIST = [];
+
+async function boot() {
+  const h = await (await fetch('/health')).json();
+  $('#health').innerHTML =
+    (h.status === 'ok' ? '<span class="chip ok">ok</span>' : '<span class="chip bad">degraded</span>') +
+    ` apps: ${h.apps.count} (${h.apps.byOrigin.map(o => `${o.origin}:${o.count}`).join(' / ')})`;
+  await loadSettings();
+  const r = await (await fetch('/apps')).json();
+  APP_LIST = r.apps;
+  $('#apps').innerHTML = '';
+  for (const a of APP_LIST) {
+    const row = document.createElement('div');
+    row.className = 'app';
+    row.innerHTML = `<div>
+        <span class="name" data-app="${a.name}">${a.name}</span>
+        <div class="desc">${a.description || ''}</div>
+      </div>
+      <span class="origin">${a.origin}</span>`;
+    row.querySelector('.name').onclick = () => runApp(a.name);
+    $('#apps').appendChild(row);
+  }
+  addStep();
+}
+
+async function loadSettings() {
+  const s = await (await fetch('/settings')).json();
+  $('#port-note').textContent = `(port ${s.port}${s.ephemeral ? ', ephemeral' : ''})`;
+  const box = $('#settings');
+  box.innerHTML = `
+    <label>apps root<br><input id="s-apps" value="${escapeHtml(s.roots.apps)}"></label>
+    <label style="display:block;margin-top:6px">services root<br><input id="s-services" value="${escapeHtml(s.roots.services)}"></label>
+    <div class="actions" style="margin-top:6px">
+      <button id="s-save">save (session only)</button>
+      <span style="font-size:11px;color:#6e7681">not persisted — lost on restart</span>
+    </div>`;
+  $('#s-save').onclick = async () => {
+    const res = await fetch('/settings', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apps: $('#s-apps').value, services: $('#s-services').value }),
+    });
+    if (!res.ok) { out('settings: ' + (await res.text()), 'bad'); return; }
+    out('settings saved (session): ' + JSON.stringify((await res.json()).roots), 'ok');
+    boot(); // re-discover
+  };
+}
+
+function addStep(appName) {
+  const s = document.createElement('div');
+  s.className = 'step';
+  s.innerHTML = `<select class="pick">${APP_LIST.map(a =>
+      `<option value="${a.name}">${a.name} (${a.origin})</option>`).join('')}</select>
+    <input class="args" placeholder='args JSON, e.g. ["--json","../../benchmarks"] (optional)'>
+    <button class="rm">remove</button>`;
+  if (appName) s.querySelector('.pick').value = appName;
+  s.querySelector('.rm').onclick = () => s.remove();
+  $('#steps').appendChild(s);
+}
+
+function stepPayload() {
+  return [...document.querySelectorAll('.step')].map((s) => {
+    let args = [];
+    const t = s.querySelector('.args').value.trim();
+    if (t) { try { args = JSON.parse(t); } catch { args = [t]; } }
+    return { app: s.querySelector('.pick').value, args };
+  });
+}
+
+async function runApp(name) {
+  const args = prompt(`args for ${name} (JSON array, empty for none):`, '[]');
+  if (args === null) return;
+  let parsed = [];
+  try { parsed = JSON.parse(args || '[]'); } catch { parsed = [args]; }
+  out(`── run: ${name} ──`, 'run');
+  const res = await fetch('/run/' + name, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ args: parsed }),
+  });
+  await stream(res);
+}
+
+async function runWire() {
+  const steps = stepPayload();
+  if (!steps.length) return;
+  out('── pipeline ──', 'run');
+  const res = await fetch('/wire', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ steps }),
+  });
+  await stream(res);
+}
+
+async function stream(res) {
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    out(dec.decode(value), '');
+  }
+}
+
+function out(text, cls) {
+  const pre = $('#out');
+  pre.insertAdjacentHTML('beforeend', `<span class="${cls}">${escapeHtml(text)}</span>`);
+  pre.scrollTop = pre.scrollHeight;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+$('#add-step').onclick = () => addStep();
+$('#run-wire').onclick = runWire;
+boot();
+</script>
+</body>
+</html>

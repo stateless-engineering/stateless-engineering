@@ -1,0 +1,13 @@
+{
+  "name": "@stateless-engineering/formatting",
+  "version": "0.1.0",
+  "description": "Stateless output formatting: pretty ANSI tables from JSON on stdin",
+  "bin": {
+    "formatting": "bin/formatting.js"
+  },
+  "main": "lib/format.js",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

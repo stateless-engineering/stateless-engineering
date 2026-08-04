@@ -1,0 +1,5 @@
+{
+  "name": "summary",
+  "description": "Transform a JSON array of objects into a table form for the formatting app",
+  "entry": ["node", "summary.js"]
+}

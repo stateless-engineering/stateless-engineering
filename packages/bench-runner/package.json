@@ -1,0 +1,12 @@
+{
+  "name": "@stateless-engineering/bench-runner",
+  "version": "0.1.0",
+  "description": "Stateless benchmark runner: run every */bench.js in a directory, collect RESULT_JSON lines, print a summary",
+  "bin": {
+    "bench-runner": "run.js"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

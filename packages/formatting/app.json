@@ -1,0 +1,5 @@
+{
+  "name": "formatting",
+  "description": "Pretty box tables from JSON on stdin ({headers,rows} or [[header],[row],...])",
+  "entry": ["node", "bin/formatting.js"]
+}

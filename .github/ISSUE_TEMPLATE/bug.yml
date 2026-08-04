@@ -1,0 +1,26 @@
+name: Bug
+description: Something behaves wrong or errors
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: What happens, including any error output.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Steps, command, or /wire payload. Mention package and Node/Chromium versions.
+    validations:
+      required: true

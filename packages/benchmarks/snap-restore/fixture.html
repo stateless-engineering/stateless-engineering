@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>heavy fixture</title>
+<link rel="stylesheet" href="/asset.css">
+<style>
+  body { font-family: system-ui; margin: 0; }
+  main { padding: 24px; max-width: 900px; margin: 0 auto; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #ccc; padding: 6px 10px; font-size: 13px; }
+  form { margin: 16px 0; }
+  input, button { padding: 6px 10px; }
+  label { margin-right: 16px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Heavy fixture</h1>
+  <p>A 12,000-record dataset is fetched over the network and rendered into a grid on every
+     load. That download + parse + execute + layout is exactly what a full reload redoes and
+     what a snapshot restore skips.</p>
+  <img src="/img1.svg" alt="asset one">
+  <img src="/img2.svg" alt="asset two">
+  <form id="app-form">
+    <label>Name <input id="name" name="name" placeholder="type something"></label>
+    <label><input type="checkbox" id="opt-in" name="opt-in"> opt-in</label>
+  </form>
+  <p>generated rows: <span id="row-count">0</span></p>
+  <table id="grid"></table>
+</main>
+<script>
+  // fetch the dataset over the network (like a real app), then render it
+  fetch('/payload.json')
+    .then((r) => r.json())
+    .then((PAYLOAD) => {
+      const tbody = document.querySelector('#grid');
+      const rows = PAYLOAD.map((r) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + r.id + '</td><td>' + r.code + '</td><td>' + r.amount.toFixed(2) +
+          '</td><td>' + (r.active ? 'yes' : 'no') + '</td>';
+        return tr;
+      });
+      tbody.append(...rows);
+      document.querySelector('#row-count').textContent = rows.length;
+
+      // JS runtime state — reset to this on every fresh load,
+      // mutated by the user during the demo's "interact" phase
+      window.__demoState = { visits: 1, token: 'fresh', payloadLength: PAYLOAD.length };
+    });
+</script>
+</body>
+</html>

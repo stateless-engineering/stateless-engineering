@@ -1,0 +1,26 @@
+name: Feature
+description: A new capability or improvement to build out from
+title: "[feature] "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: The observed gap this feature closes. Ground it — what exists today, what's missing.
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: Proposed fix
+      description: The approach. Which package(s) and files, what changes. Keep it stateless.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable, verifiable outcomes. "A PR with X fails the job; clean pushes pass."
+    validations:
+      required: true

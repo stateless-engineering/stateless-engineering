@@ -1,0 +1,5 @@
+{
+  "name": "bench-runner",
+  "description": "Stateless runner: aggregate RESULT_JSON from every bench.js in a directory",
+  "entry": ["node", "run.js"]
+}

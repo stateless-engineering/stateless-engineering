@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120">
+  <!-- Logo mark: a central square (state blob) with four outward arrows (services) -->
+  <g transform="translate(60,60)">
+    <!-- Outer thin ring (engine orbit) -->
+    <circle cx="0" cy="0" r="36" stroke="#5B6ABF" stroke-width="2" opacity="0.4" fill="none"/>
+    
+    <!-- Four service arrows (cardinal directions) -->
+    <path d="M0 -48 L0 -38 M0 -48 L-4 -42 M0 -48 L4 -42" stroke="#5B6ABF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M0 48 L0 38 M0 48 L-4 42 M0 48 L4 42" stroke="#5B6ABF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M-48 0 L-38 0 M-48 0 L-42 -4 M-48 0 L-42 4" stroke="#5B6ABF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M48 0 L38 0 M48 0 L42 -4 M48 0 L42 4" stroke="#5B6ABF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    
+    <!-- Inner square (state blob) with subtle gradient fill -->
+    <defs>
+      <linearGradient id="blobGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#4A51A5"/>
+        <stop offset="100%" stop-color="#6C5BAB"/>
+      </linearGradient>
+    </defs>
+    <rect x="-16" y="-16" width="32" height="32" rx="6" fill="url(#blobGrad)" stroke="none"/>
+    
+    <!-- Inner pixel dot (truth core) -->
+    <circle cx="0" cy="0" r="3" fill="#ffffff" opacity="0.8"/>
+  </g>
+  
+  <!-- Wordmark -->
+  <text x="140" y="55" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#1E1E2E" letter-spacing="-0.5">Stateless</text>
+  <text x="140" y="85" font-family="system-ui, sans-serif" font-size="22" font-weight="400" fill="#5B6ABF" letter-spacing="1.5">ENGINEERING</text>
+</svg>

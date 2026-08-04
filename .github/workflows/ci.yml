@@ -1,0 +1,72 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  format:
+    name: formatting pipe contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: pipe contract
+        run: |
+          echo '{"headers":["demo","dur"],"rows":[["bfcache","4.9s"]]}' \
+            | node packages/formatting/bin/formatting.js | tee /tmp/fmt.out
+          if grep -q $'\x1b' /tmp/fmt.out; then echo "ANSI leaked into piped output" >&2; exit 1; fi
+
+  runner:
+    name: bench-runner self-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: contract self-test
+        run: |
+          d=$(mktemp -d)
+          trap 'rm -rf "$d"' EXIT
+          mkdir -p "$d/ok" "$d/fail" "$d/silent"
+          printf 'console.log("RESULT_JSON {\\"demo\\":\\"ok\\",\\"durationMs\\":1,\\"headline\\":\\"fine\\"}")' > "$d/ok/bench.js"
+          printf 'process.exit(1)' > "$d/fail/bench.js"
+          printf 'console.log("no result here")' > "$d/silent/bench.js"
+          node packages/bench-runner/run.js "$d" --json | tee /tmp/res.json
+          node -e 'const r=require("/tmp/res.json"); if(r.length!==3) process.exit(1); if(r[0].status!=="ok"||r[1].status!=="fail") process.exit(1)'
+
+  benchmarks:
+    name: benchmarks regression subset
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: system chromium
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq chromium-browser >/dev/null 2>&1 || sudo apt-get install -y -qq chromium
+      - name: npm ci
+        run: npm ci --workspace packages/benchmarks
+      - name: run subset
+        run: node packages/bench-runner/run.js packages/benchmarks --json --only bfcache,cpu-burn
+        timeout-minutes: 10
+
+  webshell:
+    name: webshell boot + endpoints
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: boot and probe
+        run: |
+          node packages/webshell/webshell.js --port 8123 & WS=$!
+          trap 'kill $WS 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8123/health >/dev/null 2>&1 && break; sleep 0.3; done
+          curl -sf http://127.0.0.1:8123/health | grep -q '"status": "ok"'
+          curl -sf http://127.0.0.1:8123/apps | grep -q 'bench-runner'
