@@ -1,0 +1,12 @@
+{
+  "name": "@stateless-engineering/ticket",
+  "version": "0.1.0",
+  "description": "Stateless ticket management on GitHub issues: state machine, CLI, flow action",
+  "bin": {
+    "ticket": "bin/ticket.js"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
