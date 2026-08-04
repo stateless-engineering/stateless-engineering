@@ -30,7 +30,14 @@ packages/webshell/    the stateless app runtime & compositor (webshell.js)
 packages/bench-runner/ the stateless CLI: RESULT_JSON aggregation
 packages/formatting/  pretty ANSI box tables (stdin → stdout)
 packages/benchmarks/  the benchmark store: one dir per benchmark, bench.js entry
+packages/ticket/      (planned) stateless ticket CLI on GitHub issues — see #6
 docs/                 architecture + wiki (the org's knowledge base)
+docs/specs/           specs: stateless-tab-runtime.md (long-term flagship),
+                      stateless-tickets.md (dev tool — this repo's issue flow),
+                      foss-projects.md (the FOSS family, #8)
+docs/specs/projects/  per-project specs: stateless-issues, stateless-actions,
+                      stateless-queue
+tasks/                plan.md + todo.md — the org's execution plan (#5)
 notes/                provenance: verbatim chat-log exports that started it all
 .github/              org-level issue templates + CI workflows
 ```
