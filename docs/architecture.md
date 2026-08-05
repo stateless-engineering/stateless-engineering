@@ -23,8 +23,9 @@ stateless-engineering/
 │       └── actions/          #   the flow GitHub Action (issue hygiene + close enforcement)
 ├── docs/
 │   ├── architecture.md       # this file
+│   ├── adr/                  # recorded decisions (0001–0004)
 │   ├── wiki/                 # the knowledge base (mirrored to the GitHub wiki)
-│   └── specs/                # the platform architecture: 12 specs, one blob contract
+│   └── specs/                # the platform architecture: 13 specs, one blob contract
 │       └── projects/         #   FOSS family per-project specs
 ├── tasks/                    # plan.md + todo.md — the org's execution tracks (A–E)
 ├── notes/                    # provenance chat-log exports

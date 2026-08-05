@@ -53,6 +53,12 @@ function fail(msg, code = 1) {
 }
 
 // ── arg parsing (zero deps) ──────────────────────────────────────────────
+function pair(argv, i) {
+  const v = argv[i];
+  if (v === undefined) fail(`missing value for ${argv[i - 1]}`);
+  return v;
+}
+
 function parseArgs(argv) {
   const opts = { _: [] };
   for (let i = 0; i < argv.length; i++) {
@@ -61,19 +67,19 @@ function parseArgs(argv) {
     else if (a === '--dry-run') opts.dryRun = true;
     else if (a === '--mine') opts.mine = true;
     else if (a.startsWith('--repo=')) opts.repo = a.slice(7);
-    else if (a === '--repo') opts.repo = argv[++i];
+    else if (a === '--repo') opts.repo = pair(argv, ++i);
     else if (a.startsWith('--state=')) opts.state = a.slice(8);
-    else if (a === '--state') opts.state = argv[++i];
+    else if (a === '--state') opts.state = pair(argv, ++i);
     else if (a.startsWith('--label=')) { (opts.labels = opts.labels || []).push(a.slice(8)); }
-    else if (a === '--label') { (opts.labels = opts.labels || []).push(argv[++i]); }
+    else if (a === '--label') { (opts.labels = opts.labels || []).push(pair(argv, ++i)); }
     else if (a.startsWith('--type=')) opts.type = a.slice(7);
-    else if (a === '--type') opts.type = argv[++i];
+    else if (a === '--type') opts.type = pair(argv, ++i);
     else if (a.startsWith('--title=')) opts.title = a.slice(8);
-    else if (a === '--title') opts.title = argv[++i];
+    else if (a === '--title') opts.title = pair(argv, ++i);
     else if (a.startsWith('--body=')) opts.body = a.slice(7);
-    else if (a === '--body') opts.body = argv[++i];
+    else if (a === '--body') opts.body = pair(argv, ++i);
     else if (a.startsWith('--reviewer=')) opts.reviewer = a.slice(11).replace(/^@/, '');
-    else if (a === '--reviewer') opts.reviewer = argv[++i].replace(/^@/, '');
+    else if (a === '--reviewer') opts.reviewer = pair(argv, ++i).replace(/^@/, '');
     else opts._.push(a);
   }
   return opts;
@@ -251,7 +257,7 @@ async function verbReport(gh, opts) {
   const tickets = flow.sortTickets(issues).map((i) => flow.normalize(i, []));
   const byStatus = {};
   for (const t of tickets) (byStatus[t.status] = byStatus[t.status] || []).push(t);
-  const order = flow.STATES || ['triage', 'ready', 'in-progress', 'review', 'blocked', 'done'];
+  const order = flow.STATES;
   if (opts.json) return console.log(JSON.stringify({
     generated: new Date().toISOString(),
     counts: Object.fromEntries(order.map((s) => [s, (byStatus[s] || []).length])),
@@ -310,6 +316,10 @@ async function main() {
 }
 
 main().catch((err) => {
-  if (err instanceof GhError) fail(err.message);
+  if (err instanceof GhError) {
+    const stderr = (err.stderr || '').trim();
+    const detail = stderr && !err.message.includes(stderr) ? `\n${C.dim(stderr)}` : '';
+    fail(`${err.message}${detail}`);
+  }
   fail(err.stack || String(err));
 });

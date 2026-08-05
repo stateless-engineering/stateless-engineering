@@ -23,6 +23,10 @@ The org's architecture lives in `specs/` (mirrored from `docs/specs/`):
   tab as a state blob; benchmark-gated.
 - [Stateless browser](specs/stateless-browser.md) — the destination: a
   ground-up browser where the stateless model is the architecture.
+- [Audit layer](specs/audit-layer.md) — the phase-6 research gate:
+  record-replay vs heap snapshot, engine choice, the journal contract.
+- [ADRs](adr/) — the recorded decisions (ticket store, JSON-first blob,
+  Rust/Tauri, wiki mirror).
 - [Ticket flow](specs/stateless-tickets.md) — GitHub issues as a stateless
   job queue (this repo's own dev workflow).
 - [Language strategy](specs/stateless-languages.md) — no global optimal

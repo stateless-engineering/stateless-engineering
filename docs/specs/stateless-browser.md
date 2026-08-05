@@ -213,7 +213,7 @@ DOM+state), `base-sharing` (N tabs, one base — memory proves it),
 | 3 | Progressive restore (shell → full) | shell < 100 ms, full < 300 ms |
 | 4 | Webshell tab control plane (`/hibernate`, `/restore`) | browser-driven round-trip |
 | 5 | Benchmark gates 12/12 (hibernate-restore, blob-roundtrip, tab-spray-hibernate) | bench:all green |
-| 6 | Audit-layer design (research): record-replay vs heap snapshot | docs/specs/audit-layer.md reviewed (planned — phase-6 deliverable) |
+| 6 | Audit-layer design (research): record-replay vs heap snapshot | docs/specs/audit-layer.md reviewed — record-replay primary, snapshot fallback |
 | 7 | Journal-everything engine prototype (audit layer as core) | replay bit-stable on fixtures |
 | 8 | Base/delta runtime (immutable base + deltas) | N tabs ≈ delta memory |
 | 9 | Stateless browser: subsystems as services, down-is-default, freeze-dried restore | benchmark suite as CI gates |

@@ -33,15 +33,16 @@ jobs:
 
           # wipe previous mirror, rebuild from docs/
           find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-          mkdir -p specs
+          mkdir -p specs adr
           cp -r "$SRC/wiki/." .
           [ -f index.md ] && mv -f index.md Home.md
           cp "$SRC/architecture.md" . 2>/dev/null || true
           cp -r "$SRC/specs/." specs/
+          cp -r "$SRC/adr/." adr/
 
           # rewrite docs-relative links to wiki-relative (mirror structure)
           find . -name '*.md' -exec sed -i \
-            's#docs/specs/projects/#specs/projects/#g; s#docs/specs/#specs/#g; s#docs/wiki/#./#g; s#docs/architecture\.md#architecture.md#g' {} +
+            's#docs/specs/projects/#specs/projects/#g; s#docs/specs/#specs/#g; s#docs/adr/#adr/#g; s#docs/wiki/#./#g; s#docs/architecture\.md#architecture.md#g' {} +
 
           # navigation sidebar ([[Page]] wiki links)
           {
