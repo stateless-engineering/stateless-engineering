@@ -62,10 +62,15 @@ jobs:
       - name: system chromium
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq chromium-browser >/dev/null 2>&1 || sudo apt-get install -y -qq chromium
+          echo "system chromium: $(ls /usr/bin/chromium* 2>/dev/null || echo NONE)"
       - name: npm ci
         run: npm ci --workspace packages/benchmarks
-      - name: run subset
-        run: node packages/bench-runner/run.js packages/benchmarks --json --only bfcache,cpu-burn
+      - name: browser inventory
+        run: |
+          echo "puppeteer cache: $(ls ~/.cache/puppeteer 2>/dev/null || echo NONE)"
+          node -e 'const p=require("puppeteer"); console.log("executablePath:", p.executablePath())' 2>&1 | tail -1
+      - name: run subset (diagnostic — stderr surfaced)
+        run: node packages/bench-runner/run.js packages/benchmarks --only bfcache
         timeout-minutes: 10
 
   webshell:
