@@ -223,3 +223,64 @@ A working browser, FOSS (MIT), benchmark-gated, whose every phase descended
 from a falsifiable gate — and which the org actually uses. WASM fallback is
 controlled and counted, never silent. Nothing personal pushed anywhere
 public.
+
+## Track E — Platform expansion (spec'd, on-demand)
+
+Per the six expansion specs (issue #13). Research-grounded and ready;
+implementation starts when a consumer needs it. E1+E2 are the sequential
+spine; E3/E4/E5/E6 are parallel-safe consumers.
+
+### E1 — mesh (`docs/specs/stateless-mesh.md`)
+
+- [ ] Task: Go mesh host — WebRTC data channels + DHT discovery + capability advertisement
+  - Acceptance: `dispatch(peer, service, inputBlob) → outputBlob` across two peers with zero relay traffic
+  - Verify: two-peer dispatch gate; relay only for symmetric NATs
+  - Files: `mesh/` repo (org)
+
+- [ ] Task: BLE tier — SIG Mesh profile nodes + bridge
+  - Acceptance: micro-blobs (≤ 200 B) flood across BLE relays; a bridge forwards to the WebRTC mesh; store-and-forward without a bridge
+  - Verify: BLE node → bridge → WebRTC peer round-trip
+  - Files: `mesh/` repo
+
+### E2 — compute (`docs/specs/stateless-compute.md`)
+
+- [ ] Task: decomposition core — job manifests, deterministic sharding, merge
+  - Acceptance: same manifest + input → same shard set → byte-identical merged output; dispatcher holds zero state
+  - Verify: 10-minute job in ~1/N wall across N peers
+  - Files: `compute/` repo (org)
+
+### E3 — vm (`docs/specs/stateless-vm.md`)
+
+- [ ] Task: VM as a service — base image blob + overlay delta, seal/materialize
+  - Acceptance: idle VM = zero resources; boot from (signed base + delta); snapshot = sealed delta
+  - Verify: seal → migrate delta → materialize on a different peer
+  - Files: `vm/` repo (org)
+
+### E4 — gaming (`docs/specs/stateless-gaming.md`)
+
+- [ ] Task: GPU game service — Proton host + frame streaming + save blobs
+  - Acceptance: launch/pause/resume over the mesh; background game = save blob at rest
+  - Verify: local + remote GPU play; save sync across devices
+  - Files: `gaming/` repo (org)
+
+### E5 — native apps (`docs/specs/stateless-native-apps.md`)
+
+- [ ] Task: Rust native host (Tauri-class) — capability manifest + blob lifecycle
+  - Acceptance: same app source runs in browser webshell and native host; quit = sealed blob; capabilities enforced
+  - Verify: native app seal → relaunch round-trip
+  - Files: `native/` repo (org)
+
+### E6 — ai (`docs/specs/stateless-ai.md`)
+
+- [ ] Task: inference service + model registry + router
+  - Acceptance: `infer(model, inputBlob) → outputBlob`; weights content-addressed; continuation blob resumes on another peer
+  - Verify: local-first inference; pipeline-parallel across two peers for an oversized model
+  - Files: `ai/` repo (org)
+
+## Definition of done (Track E)
+
+Each expansion ships only when a consumer needs it; every spec's gates
+(dispatch round-trip, byte-identical decomposition, zero-resource idle VM,
+save-blob resume, seal round-trip, local-first inference) pass before
+anything is called "done". No expansion starts before E1+E2 (the spine)
+land. Nothing personal pushed anywhere public.

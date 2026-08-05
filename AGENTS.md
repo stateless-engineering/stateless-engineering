@@ -37,6 +37,11 @@ docs/specs/           specs: stateless-tab-runtime.md (long-term flagship),
                       foss-projects.md (the FOSS family, #8),
                       stateless-browser.md (ground-up rebuild, #9 — destination),
                       stateless-languages.md (platform language strategy, #12)
+docs/specs/           platform expansion (#13): stateless-mesh.md (WebRTC + BLE),
+                      stateless-compute.md (auto decomposition), stateless-vm.md
+                      (VMs as services), stateless-gaming.md (GPU services),
+                      stateless-native-apps.md (native host), stateless-ai.md
+                      (distributed inference)
 docs/specs/projects/  per-project specs: stateless-issues, stateless-actions,
                       stateless-queue
 tasks/                plan.md + todo.md — the org's execution plan (#5)

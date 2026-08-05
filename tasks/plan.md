@@ -19,6 +19,15 @@ ground-up browser where the stateless model is the architecture. Track B's
 engine research (phase 6) is its gate; Track D consumes the tab-runtime,
 ticket, and family work rather than replacing it.
 
+A **fifth track** — Track E, platform expansion (specs: issue #13) —
+researched and documented now, implemented as the platform grows:
+distributed mesh compute (WebRTC + BLE), automatic work decomposition,
+distributed VMs as stateless services, gaming (GPU services), native
+apps, and distributed AI inference. All six share one contract: the state
+blob. Track E specs are research-grounded and implementation-ready; work
+starts when a consumer needs them (the browser rebuild is the primary
+consumer).
+
 ## Dependency graph
 
 ```
@@ -37,6 +46,10 @@ Track C — FOSS family (after A's P5 dogfood gate):
 Track D — stateless browser (destination; gated on B's engine research):
   B:phase-6 (audit-layer research) ──► D1 (engine prototype) ──► D2 (base/delta)
   ──► D3 (stateless browser) ──► D4 (dogfood daily driver)
+
+Track E — platform expansion (spec'd now, issue #13; implementation on demand):
+  E1 (mesh) ──► E2 (compute) ──► E3 (vm) · E4 (gaming) · E5 (native apps) · E6 (ai)
+  (mesh+compute are the spine; vm/gaming/native/ai consume them)
 ```
 
 Track A phases are the work of issues #5 (spec — done), #6 (CLI), #7
@@ -168,6 +181,33 @@ stateless services, progressive restore, versioned storage, determinism.
   research-gated program; every phase is falsifiable (benchmark gates), no
   phase proceeds on vibes.
 
+## Track E — Platform expansion (spec'd, on-demand implementation)
+
+Implements the six expansion specs (issue #13): `stateless-mesh.md`
+(WebRTC + BLE meshing), `stateless-compute.md` (automatic work
+decomposition — "break work up and distribute it automatically"),
+`stateless-vm.md` (distributed VMs as stateless services — "cloud compute
+but better"), `stateless-gaming.md` (Steam-class GPU services),
+`stateless-native-apps.md` (native apps: Tauri-class Rust host),
+`stateless-ai.md` (distributed inference over the mesh).
+
+- **E1 — mesh:** the Go mesh host (WebRTC data channels, DHT discovery,
+  capability advertisement) + BLE tier (SIG Mesh profile, bridges). Gate:
+  a task blob dispatches and returns across two peers with zero relay
+  traffic.
+- **E2 — compute:** the decomposition core — job manifests, deterministic
+  sharding, merge. Gate: 10-minute job completes in ~1/N wall across N
+  peers with byte-identical output.
+- **E3 — vm:** VMs as services — base image blob + per-VM overlay delta,
+  seal/materialize, migration as blob movement. Gate: idle VM = zero
+  resources; resume from delta on a different peer.
+- **E4 — gaming / E5 — native apps / E6 — ai:** consume E1+E2 (GPU
+  services, the Tauri-class host, distributed inference). Each starts
+  when a consumer needs it; E4/E5/E6 are parallel-safe after E1+E2.
+- Track E implementation starts on demand — the specs are
+  research-grounded and ready; nothing in E is scheduled until a
+  consumer (D, or an external FOSS project) needs it.
+
 ## Risks & mitigations
 
 | Risk | Mitigation |
@@ -183,6 +223,8 @@ stateless services, progressive restore, versioned storage, determinism.
 | Browser rebuild scope (multi-year) | Research-gated: phase-6 audit-layer design decides the engine; every phase is benchmark-falsifiable |
 | Heap serialization unproven (the make-or-break) | Record-replay vs heap snapshot decided by research, prototyped in D1 before any engine commitment |
 | Engine choice paralysis | Spec recommends Servo-class memory-safe embeddable; the research deliverable is a decision, not a survey |
+| Expansion scope (six specs) | All on-demand: E specs are ready, nothing scheduled until a consumer needs it |
+| Mesh bandwidth assumptions (tensor parallel, VM migration) | Specs carry explicit budgets (LAN-only tensor, LAN live-migrate, WAN cold); each is a gate, not a vibe |
 
 ## Verification checkpoints (each phase)
 
@@ -202,4 +244,6 @@ starts after P5 too: C1 and C2 are parallel (both extract from Track A's
 P1–P3 output); C3 (queue core) starts when C1 lands (it owns the core) and
 runs alongside C2. Track D is strictly sequential after Track B phase 6 —
 the audit-layer research is the single gate; nothing in D proceeds before
-its decision lands.
+its decision lands. Track E is on-demand: E1+E2 (mesh, compute) are the
+sequential spine; E3/E4/E5/E6 are parallel-safe consumers of E1+E2, each
+starting when a consumer needs it.

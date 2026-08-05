@@ -83,10 +83,18 @@ stateless contract already demands. Language fit:
 | Layer | Language | Why |
 |---|---|---|
 | Core platform (engine, runtime, blob store) | **Rust** | Ownership/borrowing enforce purity at compile time (no accidental mutable globals); memory safety for a kernel-hardened base runtime; WASM portability; the strategic bet |
-| Mesh (peer discovery, WebRTC signaling, relay) | **Go** | Goroutines + stdlib for network-heavy services; small binaries, tiny containers |
+| Mesh (peer discovery, WebRTC signaling, relay) | **Go** | Goroutines + stdlib for network-heavy services; small binaries, tiny containers — architecture: `stateless-mesh.md` (WebRTC + BLE tiers) |
+| Distributed VMs (cloud compute) | **Rust core + QEMU/KVM** | VMs as stateless services: base-image blob + per-VM overlay delta — architecture: `stateless-vm.md` |
 | Hot loops, SIMD, GPU interop (physics, AI runtimes) | **Zig / C++** | Hand-tuned performance; expose a pure C ABI wrapped by a Rust/WASM interface |
-| AI inference | **Python** | PyTorch / ONNX ecosystems; served as stateless RPC endpoints (gRPC) — the webshell calls them like any other service |
+| AI inference | **Python (gRPC) / Rust** | PyTorch / ONNX ecosystems served as stateless RPC endpoints; distributed across the mesh — architecture: `stateless-ai.md` |
+| Gaming (GPU services) | **Rust core + Proton** | Steam-class games as services: save blob + frame streaming — architecture: `stateless-gaming.md` |
+| Native app host | **Rust + JS/TS UI** | Tauri-class: system webview + Rust core, capability manifest — architecture: `stateless-native-apps.md` |
 | Prototyping, tooling, integration | **JS/TS, Node** | The org's existing packages (webshell, bench-runner, formatting, ticket) — valid as long as they speak the blob contract |
+
+Every row behind the same contract: the state blob. The expansion specs
+(`stateless-mesh.md`, `stateless-compute.md`, `stateless-vm.md`,
+`stateless-gaming.md`, `stateless-native-apps.md`, `stateless-ai.md`,
+issue #13) are the architectures; this table is their language map.
 
 A render service in Rust:
 
