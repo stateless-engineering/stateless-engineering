@@ -83,7 +83,7 @@ triage ──triaged──► ready ──claim──► in-progress ──revie
 - `block <n> "reason"` / `unblock <n>` — any state; reason required to block.
 - `reopen <n>` — done → ready.
 
-Labels: `type/bug|feature|security|chore`, `priority/p0|p1|p2|p3`,
+Labels: `type/bug|feature|security|chore|docs`, `priority/p0|p1|p2|p3`,
 `area/<pkg>`.
 
 ## CLI verbs (`npm run ticket -- …`)
@@ -92,7 +92,7 @@ Labels: `type/bug|feature|security|chore`, `priority/p0|p1|p2|p3`,
 |---|---|
 | `list [--state S] [--label L] [--mine] [--json]` | the queue, deterministic sort |
 | `next [--label L] [--json]` | top of ready queue, unassigned only |
-| `new --type bug\|feature --title "…"` | create from the template contract; applies type label |
+| `new --type bug\|feature\|security\|chore\|docs --title "…"` | create from the template contract; applies type label |
 | `triage <n>` | ready gate: type + priority + acceptance |
 | `claim <n>` / `unclaim <n>` | assign to you / clear |
 | `review <n> --reviewer @u` | hand to review |

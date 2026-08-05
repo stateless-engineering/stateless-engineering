@@ -12,6 +12,29 @@ model is, and how the pieces wire together.
   instantly.
 - [The compositor](compositor.md) — how the webshell wires stateless apps
   into pipelines (`/wire`).
+- [Architecture](architecture.md) — the monorepo layout and the stateless
+  contract.
+
+## Specs (the platform)
+
+The org's architecture lives in `specs/` (mirrored from `docs/specs/`):
+
+- [Tab runtime](specs/stateless-tab-runtime.md) — the flagship: hibernate a
+  tab as a state blob; benchmark-gated.
+- [Stateless browser](specs/stateless-browser.md) — the destination: a
+  ground-up browser where the stateless model is the architecture.
+- [Ticket flow](specs/stateless-tickets.md) — GitHub issues as a stateless
+  job queue (this repo's own dev workflow).
+- [Language strategy](specs/stateless-languages.md) — no global optimal
+  language; Rust core, blob as the only contract.
+- [Platform expansion](specs/stateless-mesh.md) · [compute](specs/stateless-compute.md)
+  · [VMs](specs/stateless-vm.md) · [gaming](specs/stateless-gaming.md) ·
+  [native apps](specs/stateless-native-apps.md) · [AI](specs/stateless-ai.md)
+  — mesh compute, auto decomposition, cloud-compute VMs, Steam-class GPU
+  services, Tauri-class native apps, distributed inference — one blob
+  contract.
+- [FOSS family](specs/foss-projects.md) — the ticket idea built out into
+  standalone FOSS projects.
 
 ## Quick map
 

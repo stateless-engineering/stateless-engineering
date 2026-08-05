@@ -125,6 +125,20 @@ class Gh {
     const raw = await this._run(['pr', 'list', '--state', 'merged', '--search', `"#${n}"`, '--limit', '10', '--json', 'number,title', '--jq', '.'], { allowFail: true });
     return raw ? JSON.parse(raw) : [];
   }
+
+  // CI rollup for a PR: summarizes statusCheckRollup conclusions (CheckRun)
+  // and states (StatusContext) into one human line. null when unknown.
+  async prCiStatus(n) {
+    const raw = await this._run(['pr', 'view', String(n), '--json', 'statusCheckRollup'], { allowFail: true });
+    if (!raw) return null;
+    const rollup = (JSON.parse(raw).statusCheckRollup || []).map(
+      (c) => (c.conclusion || c.state || '').toUpperCase()
+    );
+    if (!rollup.length) return 'no checks';
+    if (rollup.every((s) => ['SUCCESS', 'NEUTRAL', 'SKIPPED'].includes(s))) return 'ci: green';
+    if (rollup.some((s) => ['FAILURE', 'ERROR', 'CANCELLED'].includes(s))) return 'ci: failing';
+    return 'ci: pending';
+  }
 }
 
 module.exports = { Gh, GhError };

@@ -36,7 +36,7 @@ function usage() {
 verbs:
   list [--state S] [--label L] [--mine]     the queue, deterministic sort
   next [--label L]                           top of ready queue (unassigned)
-  new --type bug|feature|security|chore --title "…" [--body "…"]
+  new --type bug|feature|security|chore|docs --title "…" [--body "…"]
   triage <n>                                 gate to ready (type+priority+acceptance)
   claim <n> / unclaim <n>                    assign to you / release
   review <n> --reviewer @user                hand to review
@@ -136,7 +136,6 @@ async function verbNew(gh, opts) {
   if (!flow.TYPES.includes(type)) fail(`unknown type "${type}" (${flow.TYPES.join('|')})`);
   const title = opts.title || opts._[0];
   if (!title) fail('--title is required');
-  if (!/^\[(bug|feature|security|chore)\]/.test(`[${type}] ${title}`)) fail('title must start with [type]');
   const body = opts.body || [
     '## Context',
     '',
@@ -268,8 +267,12 @@ async function verbSync(gh, opts, n) {
   const { issue, t } = await loadTicket(gh, n);
   const prs = await gh.mergedPrsReferencing(n);
   let summary = `Sync #${n}: status=${t.status}, type=${t.type || '—'}, priority=${t.priority || '—'}`;
-  if (prs.length) summary += `, merged PR #${prs[0].number} (${prs[0].title})`;
-  else summary += ', no merged PR referencing it';
+  if (prs.length) {
+    const ci = await gh.prCiStatus(prs[0].number);
+    summary += `, merged PR #${prs[0].number} (${prs[0].title}), ${ci || 'ci: unknown'}`;
+  } else {
+    summary += ', no merged PR referencing it';
+  }
   console.log(summary);
   if (opts.json) console.log(JSON.stringify({ number: n, status: t.status, pr: prs[0] || null }, null, 2));
   if (!opts.dryRun) await gh.comment(n, summary);

@@ -51,7 +51,7 @@ const typeOf = (issue) => labelValue(issue, 'type/');
 const priorityOf = (issue) => labelValue(issue, 'priority/');
 const areaOf = (issue) => labelValue(issue, 'area/');
 
-const TYPES = ['bug', 'feature', 'security', 'chore'];
+const TYPES = ['bug', 'feature', 'security', 'chore', 'docs'];
 const PRIORITIES = ['p0', 'p1', 'p2', 'p3'];
 const PRIORITY_RANK = { p0: 0, p1: 1, p2: 2, p3: 3 };
 const DEFAULT_PRIORITY = 'p2'; // org default (Action-applied on open)
@@ -92,7 +92,7 @@ function hasLgtm(comments, reviewer) {
 const transitions = {
   triage: {
     ready: ({ issue }) => {
-      if (!typeOf(issue)) return 'triage requires a type/* label (bug|feature|security|chore)';
+      if (!typeOf(issue)) return 'triage requires a type/* label (bug|feature|security|chore|docs)';
       if (!priorityOf(issue)) return 'triage requires a priority/* label (p0|p1|p2|p3)';
       if (!hasAcceptance(issue.body)) return 'triage requires acceptance criteria in the body';
       return null;

@@ -1,12 +1,12 @@
 # Architecture
 
-One repository, four packages, three roots, zero daemons.
+One repository, five packages, three roots, zero daemons.
 
 ## Repository layout
 
 ```
 stateless-engineering/
-├── package.json              # npm workspace root; scripts: bench:all, bench:one, webshell, test
+├── package.json              # npm workspace root; scripts: bench:all, bench:one, webshell, test, ticket
 ├── packages/
 │   ├── webshell/             # the app runtime & compositor (webshell.js)
 │   │   ├── webshell.js       #   HTTP server: discovery, /run, /wire, /settings
@@ -14,12 +14,28 @@ stateless-engineering/
 │   │   └── public/           #   the terminal UI
 │   ├── bench-runner/         # stateless CLI: every */bench.js → RESULT_JSON summary
 │   ├── formatting/           # pretty ANSI box tables; consumed by bench-runner in-process
-│   └── benchmarks/           # the store: one dir per benchmark with bench.js
-│       └── lib/common.js     #   shared: launch, serveFixture, treeRssKb, snapshot/restore
-├── docs/                     # architecture + wiki
+│   ├── benchmarks/           # the store: one dir per benchmark with bench.js
+│   │   └── lib/common.js     #   shared: launch, serveFixture, treeRssKb, snapshot/restore
+│   └── ticket/               # stateless ticket CLI: GitHub issues as a job queue
+│       ├── lib/flow.js       #   the state machine (pure, zero-dep)
+│       ├── lib/gh.js         #   gh subprocess wrapper
+│       ├── bin/ticket.js     #   14 verbs: list/next/new/triage/claim/review/close/...
+│       └── actions/          #   the flow GitHub Action (issue hygiene + close enforcement)
+├── docs/
+│   ├── architecture.md       # this file
+│   ├── wiki/                 # the knowledge base (mirrored to the GitHub wiki)
+│   └── specs/                # the platform architecture: 12 specs, one blob contract
+│       └── projects/         #   FOSS family per-project specs
+├── tasks/                    # plan.md + todo.md — the org's execution tracks (A–E)
 ├── notes/                    # provenance chat-log exports
-└── .github/                  # issue templates + CI workflows
+└── .github/                  # issue templates + CI/workflow: ci, flow (tickets), wiki
 ```
+
+The org's platform architecture lives in `docs/specs/` — the spec family
+defines the state-blob contract, the tab runtime, the browser rebuild, the
+ticket flow, the language strategy, and the platform expansion (mesh,
+compute, VMs, gaming, native apps, AI). This file covers the monorepo's
+implemented core.
 
 ## Data flow
 
