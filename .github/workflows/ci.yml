@@ -70,3 +70,22 @@ jobs:
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8123/health >/dev/null 2>&1 && break; sleep 0.3; done
           curl -sf http://127.0.0.1:8123/health | grep -q '"status": "ok"'
           curl -sf http://127.0.0.1:8123/apps | grep -q 'bench-runner'
+
+  ticket:
+    name: ticket flow self-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: state machine + action tests
+        run: npm test
+      - name: contract probe
+        run: |
+          node -e 'const f=require("./packages/ticket/lib/flow.js");
+            const bad=f.checkTransition("triage","ready",{issue:{labels:[],body:""}});
+            const good=f.checkTransition("triage","ready",{issue:{labels:[{name:"type/feature"},{name:"priority/p2"}],body:"### Acceptance criteria\n- [ ] x"}});
+            if(bad.ok) { console.error("triage gate accepted an untyped ticket"); process.exit(1) }
+            if(!good.ok) { console.error("triage gate rejected a typed ticket: "+good.reason); process.exit(1) }
+            console.log("ticket flow contract ok")'

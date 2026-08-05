@@ -24,12 +24,13 @@ class GhError extends Error {
 const ISSUE_FIELDS = 'number,title,labels,assignees,state,createdAt,updatedAt,url,body';
 const ISSUE_FIELDS_WITH_COMMENTS = `${ISSUE_FIELDS},comments`;
 
-// gh CLI emits camelCase + url; flow.js expects REST snake_case shapes.
+// gh CLI emits camelCase + uppercase state; flow.js expects REST snake_case
+// shapes with lowercase 'open'/'closed' (stateOf compares exact strings).
 function toIssueShape(raw) {
   return {
     number: raw.number,
     title: raw.title,
-    state: raw.state,
+    state: String(raw.state || '').toLowerCase(),
     labels: (raw.labels || []).map((l) => ({ name: l.name })),
     assignee: (raw.assignees && raw.assignees[0]) ? { login: raw.assignees[0].login } : null,
     body: raw.body || '',
