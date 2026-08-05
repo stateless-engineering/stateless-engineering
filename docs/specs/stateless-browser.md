@@ -240,7 +240,9 @@ program — this spec exists to make every phase falsifiable, never vibes.
    embeddable engine (Servo-class)** — compositor-first, no 30M-line
    mutable-state inheritance, audit-layer interposition feasible; a Chromium
    fork is explicitly *not* recommended (the audit layer is un-addable).
-   Servo vs a from-scratch engine vs record-replay over an existing
+   The platform-wide rationale is `docs/specs/stateless-languages.md`
+   (#12): Rust is the strategic core bet, and a Servo-class engine is that
+   bet. Servo vs a from-scratch engine vs record-replay over an existing
    embeddable VM is the research deliverable.
 2. **Heap strategy** — record-replay (journal at VM boundary) vs heap
    snapshot (serialize). Default research direction: record-replay; heap

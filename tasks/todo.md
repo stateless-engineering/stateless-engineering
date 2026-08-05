@@ -182,7 +182,7 @@ vibes.
 ### D1 — engine prototype (gated on B:phase-6 research)
 
 - [ ] Task: audit-layer research decision (record-replay vs heap snapshot; engine base)
-  - Acceptance: `docs/specs/audit-layer.md` concludes with a decision + rationale; engine choice made (Servo-class recommended, not Chromium fork)
+  - Acceptance: `docs/specs/audit-layer.md` concludes with a decision + rationale; engine choice made (Servo-class recommended, not Chromium fork); informed by the language strategy (`docs/specs/stateless-languages.md`, #12)
   - Verify: doc reviewed; decision recorded in the issue
   - Files: `docs/specs/audit-layer.md`
 

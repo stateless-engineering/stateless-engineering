@@ -35,7 +35,8 @@ docs/                 architecture + wiki (the org's knowledge base)
 docs/specs/           specs: stateless-tab-runtime.md (long-term flagship),
                       stateless-tickets.md (dev tool — this repo's issue flow),
                       foss-projects.md (the FOSS family, #8),
-                      stateless-browser.md (ground-up rebuild, #9 — destination)
+                      stateless-browser.md (ground-up rebuild, #9 — destination),
+                      stateless-languages.md (platform language strategy, #12)
 docs/specs/projects/  per-project specs: stateless-issues, stateless-actions,
                       stateless-queue
 tasks/                plan.md + todo.md — the org's execution plan (#5)

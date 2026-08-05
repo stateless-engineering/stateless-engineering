@@ -154,7 +154,9 @@ stateless services, progressive restore, versioned storage, determinism.
   record-replay vs heap snapshot and the engine base (recommended:
   memory-safe, embeddable, Servo-class — not a Chromium fork). Phase 7 of
   the tab-runtime plan builds the journal-everything prototype; gate =
-  replay bit-stable on fixtures.
+  replay bit-stable on fixtures. The platform-wide language strategy is
+  `docs/specs/stateless-languages.md` (#12): Rust core, blob as the only
+  contract, services in any language that speaks it.
 - **D2 — base/delta runtime:** immutable shared base + per-tab deltas; gate
   = N tabs ≈ delta memory, not N pages.
 - **D3 — stateless browser:** subsystems as services, down-is-default, the
