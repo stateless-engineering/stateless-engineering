@@ -122,10 +122,18 @@ test('closed from review with merged PR is allowed', () => {
 
 test('closed from ready with resolution comment is allowed', () => {
   const acts = lib.onClosed(issue({ labels: [{ name: 'status/ready' }] }), {
-    comments: [{ user: { login: 'x' }, body: 'resolution: wontfix' }],
+    comments: [{ user: { login: 'x' }, body: 'Resolution: wontfix' }],
     prMerged: false,
   });
   assert.deepStrictEqual(acts, []);
+});
+
+test('bot text mentioning "resolution" does NOT count as a resolution', () => {
+  const acts = lib.onClosed(issue({ labels: [{ name: 'status/ready' }] }), {
+    comments: [{ user: { login: 'x' }, body: 'closed from ready without a resolution comment or the review step. Reopening.' }],
+    prMerged: false,
+  });
+  assert.ok(acts.some((a) => a.op === 'reopen'));
 });
 
 test('closed from ready without resolution is reopened', () => {

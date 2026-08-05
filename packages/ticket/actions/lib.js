@@ -21,11 +21,12 @@ function labelState(issue) {
   return name && flow.STATES.includes(name) ? name : 'triage';
 }
 
-// Legitimate non-flow closes (wontfix, duplicate, not-planned, ...) carry a
-// resolution marker in a comment. Anything else closed outside the machine
-// gets reopened by the Action.
+// Legitimate non-flow closes carry an anchored resolution marker: the CLI
+// posts "Resolution: …" on ticket close; maintainers close as wontfix /
+// duplicate / not planned. Unanchored matching is a trap — the Action's own
+// "closed from X without a resolution comment" text contains the word.
 const RESOLUTION_RE =
-  /resolution|wontfix|wont fix|duplicate|superseded|not planned|no longer needed|lgtm|fixed by|closes #|fixes #/i;
+  /^(resolution\s*:|wontfix|wont fix|duplicate|superseded|not planned|no longer needed|lgtm|fixed by|closes #|fixes #)/im;
 
 function hygieneNeeds(issue) {
   const needs = [];
