@@ -27,6 +27,10 @@ Success criteria:
    set.
 4. A background game is a save blob at rest: zero GPU, zero CPU, zero
    network ("down is the default").
+5. **Saves are deterministic**: a paused game seals a canonical blob —
+   same game state → same hash. Resume is hash-verified and
+   byte-identical on any device; a pause with no state change produces
+   the same blob, not a new one.
 
 ## Research grounding
 
@@ -94,6 +98,76 @@ Success criteria:
 | save sync | shared blob store | save game as content-addressed blob; sync across devices; conflict = newest-wins by hash? |
 | input service | shared | gamepad/pointer events as service inputs (same contract as every input) |
 
+## Deterministic game saving (pause = sealed blob)
+
+A paused game is a **deterministic save blob**: a pure function of game
+state. Same state → same hash. This is the platform's rule 3 (same inputs
+→ same behavior) applied to game saves, and it turns "pause" into the
+cleanest possible state primitive.
+
+### The determinism contract
+
+`seal(state) → blob` must be canonical: identical state serializes to
+identical bytes, always.
+
+1. **Fixed timestep** — the simulation advances on a fixed tick, never
+   wall-clock; the tick counter is part of state. Wall-clock/playtime is
+   *metadata outside the blob*, declared nondeterministic.
+2. **Seeded RNG** — every source of randomness is a seeded PRNG; the
+   seed is part of state. No unseeded entropy enters the simulation.
+3. **Deterministic iteration** — no hash-map/hash-set order dependence;
+   iteration is by explicit order (arrays, sorted collections).
+4. **Canonical serialization** — ordered fields, fixed-width numerics,
+   IEEE floats serialized canonically (explicit NaN/denormal policy), no
+   timestamps, no session IDs, no machine identifiers in the payload.
+5. **Verifiable** — the blob is hashed + signed (the platform envelope);
+   loading verifies before materializing. A corrupted or malicious save
+   cannot inject state.
+
+### Pause = freeze, seal, evict
+
+```
+player pauses
+  → game service freezes the fixed-timestep loop (no further ticks)
+  → seal(state) → canonical blob → hash + sign → store
+  → game process evicted ("down is the default")
+resume
+  → open(blob) → verify hash/signature → materialize state
+  → advance ticks from the recorded tick counter
+```
+
+"Pause" and "quit" are the same operation — seal + evict. A checkpoint is
+just another seal, and because blobs are content-addressed, an unchanged
+game between checkpoints produces *the same hash* — one blob, not two.
+
+### What determinism buys
+
+- **Dedupe** — pause twice with no change = one blob.
+- **Time travel** — every seal is a new hashed blob; rewind = materialize
+  an older hash (the tab-runtime blob format's versioning, free).
+- **Cross-device resume** — byte-identical state on any device with the
+  game; deterministic seal + blob = no drift.
+- **Replay** — the same determinism that makes replays reproduce
+  (record inputs + seed, re-simulate — shmup/TAS practice) makes saves
+  rewind points in replay space: a deterministic save + input stream is an
+  exact re-run.
+- **Divergence checking** — after resume, optionally re-simulate N ticks
+  and compare a derived hash against the recorded one (the deterministic
+  engine-substrate pattern) — corruption detection beyond the blob hash.
+
+### Honest limits
+
+- Determinism covers the *simulation*, not the renderer — GPU output is
+  derived (the platform's rule; same as browser/GPU state), so frames may
+  differ across drivers while state is identical.
+- Long-run replay determinism has practical limits (recording inputs +
+  seed reproduces runs, but unbounded state growth needs rewind points —
+  exactly what versioned blobs provide).
+- Some engines are not deterministic by default; determinism is an
+  opt-in contract games declare in `app.json`
+  (`"deterministicSaves": true`), and the platform validates it at
+  development time: seal twice → same hash → test gate.
+
 ## Open questions
 
 1. **GPU virtualization** — for remote/mesh GPU services: full GPU
@@ -108,13 +182,15 @@ Success criteria:
    where the encoder exists, H.264/HEVC fallback; < 60 ms glass-to-glass
    on LAN (mesh local tier), WAN via the WebRTC tier.
 4. **Save conflict semantics** — the blob store is content-addressed;
-   two devices resume the same save → merge policy? Default: explicit
-   "resume latest" by blob reference (the manifest pins the save blob);
-   automatic merge only for structured saves, later.
-5. **Save-state frequency** — checkpoint blobs (periodic) vs quit-only?
-   Default: quit-only + optional checkpoints for games with crash-prone
-   sessions; the blob versioning makes checkpoints free (each is a new
-   hashed blob).
+   two devices resume the same save → merge policy? Default: deterministic
+   blobs make conflicts *explicit* — two hashes, resume by reference
+   (the manifest pins which blob); automatic merge only for structured
+   saves, later.
+5. **Save-state frequency** — checkpoint blobs vs quit-only? **Resolved by
+   deterministic saves:** pause-seal is the default (seal + evict, same as
+   quit); optional checkpoints for crash-prone sessions — each checkpoint
+   is a new hashed blob and an unchanged game between checkpoints yields
+   the *same* hash (one blob, dedupe for free).
 
 ## Boundaries
 
@@ -133,12 +209,15 @@ Success criteria:
 
 - `stateless-mesh.md` / `stateless-compute.md` — remote GPU play and
   background jobs (shader caches, telemetry aggregation) use the mesh
-  and auto-decomposition.
+  and auto-decomposition; the compute spec's determinism rules are the
+  save-blob contract's cousins.
 - `stateless-languages.md` — the GPU service is the Zig/C++ hot-loop row
   wrapped in Rust; streaming is the Go/Rust network row.
 - `stateless-native-apps.md` — the player client is a native app (the
   Rust host) when not in the browser.
-- The tab-runtime blob format carries saves; no new contract.
+- The tab-runtime blob format carries saves (versioned, hashed, signed);
+  deterministic saves are that envelope with a canonical payload. No new
+  contract.
 
 ## Sources
 
@@ -147,3 +226,11 @@ Success criteria:
 - GE-Proton community builds (2026)
 - Steam Deck / SteamOS / gamescope — the headless-game-host precedent
 - Moonlight/Sunshine — open-source GameStream protocol implementation
+- Deterministic simulation for replays — fixed timestep, seeded RNG,
+  deterministic iteration/math (bugnet.io, 2026)
+- Save/replay systems in shmups — input stream + RNG seed re-simulation,
+  serialization versioning, long-run limits (flukz.org, 2026)
+- GGPO-style rollback netcode — fixed-step simulation, state capture,
+  replay (Rollback-Core, UE5)
+- Deterministic engine substrate — fixed timestep, seed/tick handling,
+  replay + divergence checking, snapshot boundaries (xenor-engine)
