@@ -36,6 +36,17 @@ npm run ticket -- report --json         # stateless status board
 - `bin/ticket.js` — the CLI verbs.
 - `test/flow.test.js` — `node --test`; the state machine's contract.
 
+## flow Action
+
+`.github/workflows/flow.yml` runs `actions/flow.js` on issue events (opened,
+labeled, unlabeled, assigned, closed): applies defaults (`priority/p2`),
+comments hygiene violations (missing `type/*` label, `[type] ` title prefix,
+missing acceptance criteria), announces status transitions, advances
+assignment from ready to in-progress, and blocks closes that skip the
+machine — reopening + red check unless a resolution comment or reviewer lgtm
+exists. Decision logic lives in `actions/lib.js` (pure, unit-tested); the
+runner executes via `gh` with `issues: write` only.
+
 ## Stateless contract
 
 No local state, no config files, no caches, no daemon. Same inputs → same

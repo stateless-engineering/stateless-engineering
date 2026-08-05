@@ -1,0 +1,22 @@
+name: flow
+on:
+  issues:
+    types: [opened, labeled, unlabeled, assigned, closed]
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  enforce:
+    name: ticket flow enforcement
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: run flow action (issue #7)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node packages/ticket/actions/flow.js
