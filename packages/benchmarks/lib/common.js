@@ -18,18 +18,31 @@ const findSystemChrome = () => CHROME_PATHS.find((p) => fs.existsSync(p));
 async function launch(opts = {}) {
   const exe = findSystemChrome();
   const base = exe ? { headless: true, executablePath: exe } : {};
-  // GitHub Actions runners disable unprivileged user namespaces, so the
-  // Chromium sandbox cannot start ("No usable sandbox!"). --no-sandbox is
-  // the documented CI workaround; local runs keep the sandbox.
-  const args = process.env.CI === 'true' ? ['--no-sandbox', '--disable-setuid-sandbox'] : [];
+  // Chromium refuses to run as root without --no-sandbox, and GitHub
+  // Actions runners disable unprivileged user namespaces ("No usable
+  // sandbox!"). Both get the documented CI workaround; unprivileged local
+  // runs keep the sandbox.
+  const asRoot = typeof process.getuid === 'function' && process.getuid() === 0;
+  const args = [
+    ...(process.env.CI === 'true' || asRoot ? ['--no-sandbox', '--disable-setuid-sandbox'] : []),
+    // Harness hygiene: a fresh Chromium profile phones home to component
+    // updaters on first run, which can stall the launch past Puppeteer's
+    // default 30s WS-endpoint timeout and pollutes benchmarks with
+    // background traffic. Disable both for deterministic runs.
+    '--no-first-run',
+    '--disable-component-update',
+  ];
+  // Cold first launches (fresh profile, loaded VM, cold caches) can take
+  // well over 30s to reach the DevTools WS endpoint; give them room.
+  const launchOpts = { ...base, args, timeout: 120_000, ...opts };
   try {
-    return await puppeteer.launch({ ...base, args, ...opts });
+    return await puppeteer.launch(launchOpts);
   } catch (err) {
     console.warn(
       'bundled chrome unavailable, falling back to chrome-headless-shell:',
       err.message.split('\n')[0]
     );
-    return puppeteer.launch({ headless: 'shell', args, ...opts });
+    return puppeteer.launch({ headless: 'shell', args, timeout: 120_000, ...opts });
   }
 }
 
