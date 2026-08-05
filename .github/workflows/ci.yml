@@ -32,11 +32,24 @@ jobs:
           d=$(mktemp -d)
           trap 'rm -rf "$d"' EXIT
           mkdir -p "$d/ok" "$d/fail" "$d/silent"
-          printf 'console.log("RESULT_JSON {\\"demo\\":\\"ok\\",\\"durationMs\\":1,\\"headline\\":\\"fine\\"}")' > "$d/ok/bench.js"
-          printf 'process.exit(1)' > "$d/fail/bench.js"
-          printf 'console.log("no result here")' > "$d/silent/bench.js"
+          cat > "$d/ok/bench.js" <<'EOF'
+          console.log("RESULT_JSON {\"demo\":\"ok\",\"durationMs\":1,\"headline\":\"fine\"}")
+          EOF
+          cat > "$d/fail/bench.js" <<'EOF'
+          process.exit(1)
+          EOF
+          cat > "$d/silent/bench.js" <<'EOF'
+          console.log("no result here")
+          EOF
           node packages/bench-runner/run.js "$d" --json | tee /tmp/res.json
-          node -e 'const r=require("/tmp/res.json"); if(r.length!==3) process.exit(1); if(r[0].status!=="ok"||r[1].status!=="fail") process.exit(1)'
+          node -e '
+            const r = require("/tmp/res.json");
+            if (r.length !== 3) { console.error("expected 3 results, got " + r.length); process.exit(1); }
+            // findDemos sorts alphabetically — assert by demo name, not index
+            const by = Object.fromEntries(r.map((x) => [x.demo, x.status]));
+            if (by.ok !== "ok") { console.error("ok demo not ok: " + JSON.stringify(r)); process.exit(1); }
+            if (by.fail !== "FAILED (exit 1)") { console.error("fail demo not failed: " + JSON.stringify(r)); process.exit(1); }
+            console.log("bench-runner contract ok")'
 
   benchmarks:
     name: benchmarks regression subset
