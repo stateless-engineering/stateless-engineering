@@ -168,29 +168,29 @@ game between checkpoints produces *the same hash* — one blob, not two.
   (`"deterministicSaves": true`), and the platform validates it at
   development time: seal twice → same hash → test gate.
 
-## Open questions
+## Open questions (resolved by research)
 
-1. **GPU virtualization** — for remote/mesh GPU services: full GPU
-   passthrough (VM), SR-IOV, or MFA (mediated passthrough)? Default:
-   passthrough where available; MFA when sharing matters; a GPU service
-   is one game at a time in early phases (deterministic, no scheduler).
-2. **Anti-cheat** — kernel anti-cheat (EAC/BattlEye) breaks Wine/VMs.
-   Default: whitelisted-Proton titles are supported; others degrade with
-   a clear compatibility badge in the manifest. Never claim universal
-   compatibility.
-3. **Streaming budget** — target latency/codec: default 1080p60 AV1
-   where the encoder exists, H.264/HEVC fallback; < 60 ms glass-to-glass
-   on LAN (mesh local tier), WAN via the WebRTC tier.
-4. **Save conflict semantics** — the blob store is content-addressed;
-   two devices resume the same save → merge policy? Default: deterministic
-   blobs make conflicts *explicit* — two hashes, resume by reference
-   (the manifest pins which blob); automatic merge only for structured
-   saves, later.
-5. **Save-state frequency** — checkpoint blobs vs quit-only? **Resolved by
-   deterministic saves:** pause-seal is the default (seal + evict, same as
-   quit); optional checkpoints for crash-prone sessions — each checkpoint
-   is a new hashed blob and an unchanged game between checkpoints yields
-   the *same* hash (one blob, dedupe for free).
+1. **GPU virtualization** — *resolved:* **VFIO passthrough** (whole GPU)
+   is the default for a game service — one game at a time, full
+   performance, no license friction; **SR-IOV / MIG** for sharing GPUs
+   across concurrent sessions where the vendor path allows it (research:
+   NVIDIA MIG/vGPU requires AI Enterprise licensing; AMD SR-IOV/ROCm on
+   Instinct; licensing cost is the gating factor, not technology).
+2. **Anti-cheat** — *resolved (policy):* whitelisted-Proton titles are
+   supported; everything else degrades with a clear compatibility badge in
+   the manifest. Kernel anti-cheat (EAC/BattlEye) compatibility is the
+   vendor's call — the platform never circumvents it.
+3. **Streaming budget** — *resolved:* AV1 where the encoder exists
+   (VA-API/NVENC), H.264/HEVC fallback; target < 60 ms glass-to-glass on
+   LAN (the mesh local tier), WAN via the WebRTC tier (Moonlight/
+   Sunshine-class protocol precedent).
+4. **Save conflict semantics** — *resolved by deterministic saves:*
+   conflicts are explicit — two hashes, resume by reference (the manifest
+   pins the blob); automatic merge only for structured saves, later.
+5. **Save-state frequency** — *resolved by deterministic saves:*
+   pause-seal is the default (seal + evict, same as quit); optional
+   checkpoints for crash-prone sessions — unchanged state between
+   checkpoints yields the *same* hash (dedupe for free).
 
 ## Boundaries
 
@@ -234,3 +234,5 @@ game between checkpoints produces *the same hash* — one blob, not two.
   replay (Rollback-Core, UE5)
 - Deterministic engine substrate — fixed timestep, seed/tick handling,
   replay + divergence checking, snapshot boundaries (xenor-engine)
+- GPU virtualization for gaming VMs: VFIO passthrough, NVIDIA MIG/vGPU
+  licensing, AMD SR-IOV (2025–2026)

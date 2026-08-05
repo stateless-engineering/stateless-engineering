@@ -117,28 +117,32 @@ infer(model, inputBlob) → outputBlob
 | state store | shared blob store | KV/conversation blobs (content-addressed, sealed per turn) |
 | batch worker | stateless-compute | data-parallel inference: N requests as idempotent shards |
 
-## Open questions
+## Open questions (resolved by research)
 
-1. **Parallelism policy** — pipeline across the mesh (WAN-tolerant) vs
-   tensor within a LAN node-group? Default: local single-node when the
-   model fits; pipeline across peers for bigger models; tensor only
-   inside one trusted LAN peer-group (bandwidth math decides).
-2. **Engine choice** — llama.cpp (local, single-user) vs vLLM
-   (server-side throughput) per deployment, same contract? Default: yes —
-   the engine is a service implementation behind `infer()`, exactly the
-   language spec's "swap without touching the system".
-3. **KV portability** — is the KV cache blob truly portable across
-   engines (format is engine-specific today)? Default: state blob v1 =
-   conversation + session metadata (portable); raw KV cache is a
-   peer-local cache optimization, not the contract (same answer as
-   gaming savevm).
-4. **Weights distribution** — pull-by-hash from the mesh (store-and-
-   forward over BLE/WebRTC) vs a seed peer? Default: pull-by-hash;
-   a 70B blob over BLE is a pointer + patience, not a transfer.
-5. **Trust for inference** — models are signed; untrusted models run in
-   the same sandbox as untrusted apps (capability-confined). Default:
-   yes — a model is data, not code, until it runs; then it's the
-   native-app sandbox.
+1. **Parallelism policy** — *resolved:* local single-node when the model
+   fits; **pipeline** across mesh peers (WAN-tolerant); **tensor** only
+   within one trusted LAN peer-group (research: tensor parallelism is
+   bandwidth-hungry — impractical across WAN; pipeline and data
+   parallelism travel well; 1 Gbps suffices for some workloads only).
+2. **Engine choice** — *resolved:* the engine is a swappable service
+   implementation behind `infer()` — llama.cpp for local/single-user,
+   vLLM for server-side throughput (Red Hat guidance); no platform
+   mandate, per the language spec's meta-principle.
+3. **KV portability** — *resolved:* **not portable across engines** —
+   research confirms vLLM (PagedAttention, engine-specific cache
+   managers) and llama.cpp (slot/cache controls) have no shared KV
+   format; GGUF carries weights + metadata, not KV snapshots; quantized
+   caches and speculative decoding are engine-specific. The state blob
+   therefore carries conversation + session metadata (portable); raw KV
+   is a peer-local cache, exactly like gaming savevm.
+4. **Weights distribution** — *resolved:* pull-by-hash from the mesh
+   (content-addressed blob sync); on the BLE tier a large weight is a
+   pointer + patience, not a transfer.
+5. **Trust for inference** — *resolved:* signed models; an untrusted
+   model runs in the same sandbox as an untrusted app (capability-
+   confined — the mesh sandbox ladder: WASM → gVisor → Firecracker). A
+   model is data until it runs; then it is code with app-level
+   capabilities.
 
 ## Boundaries
 
@@ -176,3 +180,6 @@ infer(model, inputBlob) → outputBlob
 - Red Hat: llama.cpp vs vLLM — choosing the local inference engine (2026)
 - distributed-llama.cpp — central server routing to mTLS client nodes
   (GitHub, 2026)
+- KV cache portability research: vLLM PagedAttention vs llama.cpp
+  slot/cache controls; GGUF carries weights + metadata, not KV snapshots;
+  quantized caches and speculative decoding are engine-specific (2026)

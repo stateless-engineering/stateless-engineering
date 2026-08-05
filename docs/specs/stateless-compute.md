@@ -102,25 +102,23 @@ merge (pure, ordered) ──► output blob (hash-verified)
    same merged output; `sortTickets`-style discipline applied to
    distributed compute.
 
-## Open questions
+## Open questions (resolved by research)
 
-1. **Shard granularity** — fixed-size shards (max determinism) vs
-   capability-adaptive (fast peers get more)? Default: fixed-size from the
-   manifest; adaptive only as a *merge-time* optimization (never changes
-   the shard mapping, only dispatch order).
-2. **Retry semantics** — at-least-once with content-hash dedupe at merge
-   (default; shards are pure) vs exactly-once via a checkpoint blob
-   (needed only for side-effecting services, which the platform
-   discourages anyway).
-3. **Peer inventory** — where does the dispatcher learn who's capable?
-   Default: the mesh's DHT + capability advertisement (mesh spec), cached
-   for one plan-run only — no ambient inventory.
-4. **Merge distribution** — when does a job warrant tree merge vs a
-   single dispatcher merge? Default: single merge up to ~256 shards, tree
-   beyond (merge blobs are themselves shardable).
-5. **Trust weighting** — capability ∩ trust tie-broken by latency (mesh
-   spec default) vs trust-first for financial/medical data? Default:
-   manifest declares a `trust` requirement; default is capability-first.
+1. **Shard granularity** — *resolved:* fixed-size shards from the manifest
+   (max determinism — the shard mapping is a pure function of input);
+   capability-adaptive *dispatch order* only, never the mapping itself.
+2. **Retry semantics** — *resolved:* at-least-once with content-hash
+   dedupe at the merge (shards are pure → replay is safe); BOINC-style
+   result verification by hash/cross-check for untrusted executors.
+3. **Peer inventory** — *resolved:* the mesh DHT's capability
+   advertisement, read per plan-run only — no ambient inventory
+   (derive-don't-schedule; the dispatcher holds zero state).
+4. **Merge distribution** — *resolved:* single merge up to ~256 shards,
+   tree merge beyond (merge is decomposable; logarithmic fan-in — the
+   standard map-reduce pattern).
+5. **Trust weighting** — *resolved:* the manifest declares a `trust`
+   requirement; default is capability-first with the mesh's trust field as
+   the tiebreak input (same selection rule as stateless-mesh).
 
 ## Boundaries
 

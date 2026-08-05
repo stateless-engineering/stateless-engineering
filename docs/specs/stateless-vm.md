@@ -109,28 +109,27 @@ Success criteria:
 | fleet dispatcher | stateless-compute | N-replica scale-out: one manifest → idempotent VM shards |
 | capability broker | shared | peers advertise CPU/RAM/KVM; dispatcher never schedules on incapable peers |
 
-## Open questions
+## Open questions (resolved by research)
 
-1. **Fast resume (savevm) vs cold boot** — savevm gives instant resume
-   but is host-CPU-specific; cold boot from the delta is portable. 
-   Default: cold boot is the contract; savevm is a peer-local cache
-   optimization, never the portable state.
-2. **Live migration scope** — LAN live migration (LXD-class, QCOW2
-   snapshot) vs WAN (cold: seal delta, move, boot). Default: live on LAN,
-   cold across the WAN mesh; memory-heavy live migration over WebRTC
-   bandwidth is not the v1.
-3. **Trust for running VMs** — an untrusted peer hosting a VM is a
-   hypervisor-trust question. Default: signed base images + KVM
-   isolation; manifest declares `trust` (same field as stateless-compute);
-   confidential computing (SEV/SNP) is a later, explicit capability.
-4. **Image provenance** — base images are signed by whom? Default: the
-   org's key for the platform's images; third-party images require an
-   explicit trust declaration in the manifest (same shape as the mesh
-   trust weighting).
-5. **Delta growth** — an overlay grows with uptime; snapshot cadence?
-   Default: seal-on-quit + periodic checkpoint deltas for long-running
-   VMs (each checkpoint is a new hashed blob — versioning makes them
-   free, same answer as gaming saves).
+1. **savevm fast-resume vs cold boot** — *resolved:* cold boot from the
+   delta is the portable contract; savevm is a peer-local cache
+   optimization (research: savevm is host-CPU/device-specific — the 
+   portable state is the delta disk, not RAM).
+2. **Live migration scope** — *resolved:* LAN live migration via QCOW2
+   snapshot (the LXD-class mechanism); WAN = cold (seal delta, move, boot).
+   Memory streaming over WebRTC-class WAN bandwidth is not the v1.
+3. **Trust for running VMs** — *resolved:* **confidential VMs** —
+   AMD **SEV-SNP** and Intel **TDX** are mainstream by 2026 (Azure
+   dual-track GA — DCasv6/DCesv6, GCP production; **TDX Connect** adds
+   PCIe/GPU confidential I/O). The VM manifest declares a
+   `confidential: sev-snp | tdx | none` capability; KVM isolation is the
+   baseline, confidential compute is the answer for untrusted hosts.
+4. **Image provenance** — *resolved:* platform-signed base images; a
+   third-party image requires an explicit `trust` declaration in the
+   manifest (same field as stateless-compute / mesh peer selection).
+5. **Delta growth** — *resolved:* seal-on-quit plus periodic checkpoint
+   deltas for long-running VMs; each checkpoint is a new hashed blob
+   (versioning makes them free — same answer as gaming saves).
 
 ## Boundaries
 
@@ -166,3 +165,8 @@ Success criteria:
 - QEMU qcow2 backing-file/overlay images (Ubuntu cloud image docs)
 - LXD VM live migration internals — QCOW2 snapshot of the root disk
 - QEMU snapshot save/load on raw rootfs via live overlay (qmu issue #17)
+- AMD SEV-SNP / Intel TDX confidential-VM support and adoption
+  (Azure DCasv6/DCesv6 GA, GCP production, TDX Connect for PCIe/GPU
+  confidentiality — 2026)
+- GPU virtualization: VFIO passthrough, NVIDIA MIG/vGPU, AMD SR-IOV
+  (2025–2026)

@@ -128,45 +128,45 @@ BLE nodes (sensors/controllers) ── BLE Mesh (flooding, relays) ──► bri
      micro-blobs (signed)          no routing, no daemons            (phone/laptop)     full blob store
 ```
 
-### BLE open questions
+### BLE open questions (resolved by research)
 
-1. **Provisioning UX** — Bluetooth Mesh provisioning (out-of-band
-   identification, network keys) is the one stateful setup step. Default:
-   a provisioner service on the bridge; keys derived from a signed
-   manifest, no ambient key storage.
-2. **Blob size policy** — what fits in a micro-blob? Default: ≤ 200 B
-   payloads on the BLE tier; anything larger is a *pointer* to a
-   content-addressed blob fetched out-of-band when a bridge is reached.
-3. **Relay flooding bandwidth** — managed flooding is robust but
-   bandwidth-hungry as nodes grow. Default: subnets (BLE Mesh network
-   keys partition the mesh) for dense deployments; observe before tuning.
-4. **Security** — BLE Mesh uses 128-bit AES with network/app keys; the
-   stateless twist is that blob signatures must be verifiable by any
-   relay (public-key verify, not secret sharing). Default: signed
-   micro-blobs; mesh keys protect the transport only.
-5. **Bridge availability** — BLE is a *presence* technology; the mesh
-   must treat bridges as "down by default" and survive without them
-   (store-and-forward). Default: yes — the platform never depends on a
-   bridge being up.
+1. **Provisioning UX** — *resolved:* a provisioner service on the bridge;
+   network keys derived from a signed manifest; no ambient key storage
+   (SIG Mesh provisioning is the one setup step, and the bridge owns it).
+2. **Blob size policy** — *resolved:* ≤ 200 B payloads on the BLE tier;
+   larger content is a *pointer* to a content-addressed blob fetched
+   out-of-band (BLE MTU reality).
+3. **Relay flooding bandwidth** — *resolved:* subnets (SIG Mesh network
+   keys partition the mesh) for dense deployments; managed flooding
+   scales by partition, observed before tuning.
+4. **Security** — *resolved:* signed micro-blobs + SIG Mesh keys (AES-128)
+   for transport; the platform's blob signatures add authenticity that
+   mesh keys alone don't provide.
+5. **Bridge availability** — *resolved:* store-and-forward, always — the
+   platform never depends on a bridge being up; BLE is a presence
+   technology and the mesh treats it as such.
 
-## Open questions
+## Open questions (resolved by research)
 
-1. **Peer selection** — capability-first (who has the GPU) vs latency-first
-   vs trust-weighted? Default: capability ∩ trust, tie-broken by latency.
-2. **TURN economics** — who runs the relay? Default: self-hosted, one
-   relay per mesh; relay bandwidth is the only cloud touchpoint.
-3. **Blob sync vs dispatch** — do task/result blobs flow over the data
-   channel (in-band) or via content-addressed fetch (out-of-band, DHT)? 
-   Default: in-band for small blobs, out-of-band for large (weights,
-   media) — matches how the platform will ship model weights (see
-   stateless-ai.md).
-4. **Untrusted peers** — execution sandboxing on the executor
-   (container/WASM?), and what a peer may *not* do even with a valid
-   manifest. Default: WASM first (matches app-logic), native exec only
-   with explicit capability grants.
-5. **Symmetric NATs** — TURN is the answer but adds latency; is a mesh
-   that degrades gracefully to relay-only for those peers acceptable?
-   Default: yes.
+1. **Peer selection** — *resolved:* capability ∩ trust, tie-broken by
+   latency, then by stable peer-id (deterministic — the platform's rule 3).
+   BOINC's volunteer model validates opt-in attach + trust weighting:
+   peers advertise capabilities and attach deliberately; no peer is
+   drafted.
+2. **TURN economics** — *resolved:* one self-hosted relay per mesh
+   (coturn-class); relay is the only infrastructure, and only symmetric
+   NATs use it (the p2p-localhost finding: the data plane is direct after
+   one negotiation touchpoint).
+3. **Blob sync vs dispatch** — *resolved:* in-band under ~64 KiB (unified
+   with the BLE micro-blob policy), out-of-band content-addressed fetch
+   above — matches how model weights and media flow (see stateless-ai.md).
+4. **Untrusted peers** — *resolved:* a three-rung sandbox ladder: **WASM**
+   first (lightest, fastest cold start), **gVisor** for syscall-level
+   native execution, **Firecracker microVM** for strong isolation on the
+   VM tier (research heuristic: untrusted code ≥ gVisor; production data →
+   microVM). The manifest declares which rung a job needs.
+5. **Symmetric NATs** — *resolved:* TURN fallback accepted — relay for
+   those peers only; direct for everyone else (ICE reality, RFC 8831).
 
 ## Boundaries
 
@@ -194,3 +194,8 @@ BLE nodes (sensors/controllers) ── BLE Mesh (flooding, relays) ──► bri
 - "P2P Localhost Meshes: Replacing Cloud Relays with WebRTC Data
   Channels" (Substack, 2026)
 - WebRTC NAT traversal STUN/TURN/hole-punching guides (2026)
+- Bluetooth Mesh SIG profile + nRF Connect SDK docs (Nordic, 2026)
+- Agent sandboxing: Firecracker microVMs, gVisor, WASM isolation
+  comparisons (2025–2026)
+- BOINC volunteer computing — opt-in attach, credit/trust weighting
+  (boinc.berkeley.edu)

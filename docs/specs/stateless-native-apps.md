@@ -91,29 +91,27 @@ Success criteria:
 | capability broker | Rust | syscall-boundary enforcement of the manifest (fs, network, BLE, GPU) |
 | packaging | shared | bundle = host + app manifest + blob; signed; AppImage/Flatpak for Linux |
 
-## Open questions
+## Open questions (resolved by research)
 
-1. **Build on Tauri vs from scratch** — Tauri 2 gives webview + Rust
-   core + mobile for free; the stateless model needs blob-seal/materialize
-   semantics Tauri doesn't have. Default: build on Tauri (capability
-   model fits), add the blob lifecycle as a plugin layer; from-scratch
-   only if Tauri's webview abstraction fights the model.
-2. **Webview choice** — WebKitGTK (Linux) vs wry's per-platform webviews;
-   consistency across platforms is the known trade-off. Default:
-   platform webview (Tauri default), with the render projection API
-   insulating apps from webview quirks.
-3. **App distribution** — signed bundles + a registry? Default: signed
-   bundles, content-addressed (the blob store is the distribution
-   channel — an app update is a new blob hash); a storefront is a
-   non-goal until the family's adoption says otherwise.
-4. **WASM vs native plugin logic** — WASM (component model) for
-   portable logic, native plugins for perf-critical paths (same rule as
-   the language spec's hot-loop row). Default: WASM first, native plugin
-   behind the same blob contract.
-5. **App state portability** — can an app's blob resume on a different
-   device (sealed blob + capability grant)? Default: yes for
-   capability-confined apps; the blob is the app's session (same answer
-   as the gaming spec's save blobs).
+1. **Build on Tauri vs from scratch** — *resolved:* build on **Tauri 2**
+   (GA late 2024, mature by 2026: 10–40 MB bundles, Rust core, system
+   webview, capabilities security model); the blob seal/materialize
+   lifecycle is a plugin layer on top. From-scratch only if Tauri's
+   webview abstraction fights the model (unlikely — the capability
+   model already matches).
+2. **Webview choice** — *open, deferred to E5:* platform webviews
+   (WebKitGTK / wry) are the Tauri default; the render projection API
+   must insulate apps from webview quirks. Decide at implementation with
+   the capability broker; consistency-vs-size trade-off is the known axis.
+3. **App distribution** — *resolved:* signed, content-addressed bundles —
+   the blob store is the distribution channel (an update is a new blob
+   hash); no storefront daemon.
+4. **WASM vs native plugin logic** — *resolved:* WASM (component model)
+   first for portable logic; native plugins behind the same blob contract
+   for hot loops (the language spec's rule).
+5. **App state portability** — *resolved:* yes for capability-confined
+   apps — the blob is the app's session (sealed blob + capability grant
+   resume anywhere, same answer as gaming saves and VM deltas).
 
 ## Boundaries
 
