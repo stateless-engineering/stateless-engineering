@@ -100,12 +100,13 @@ class Gh {
     return this._run(args, { mutation: true });
   }
 
-  async editIssue(n, { addLabels = [], removeLabels = [], addAssignee = null, removeAssignee = null } = {}) {
+  async editIssue(n, { addLabels = [], removeLabels = [], addAssignee = null, removeAssignee = null, body = null } = {}) {
     const args = ['issue', 'edit', String(n)];
     for (const l of addLabels) args.push('--add-label', l);
     for (const l of removeLabels) args.push('--remove-label', l);
     if (addAssignee) args.push('--add-assignee', addAssignee);
     if (removeAssignee) args.push('--remove-assignee', removeAssignee);
+    if (body !== null) args.push('--body', body);
     return this._run(args, { mutation: true });
   }
 
