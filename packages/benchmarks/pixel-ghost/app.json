@@ -1,0 +1,5 @@
+{
+  "name": "pixel-ghost",
+  "description": "Ghost processes: closed tabs stay dead, no zombie renderers",
+  "entry": ["node", "bench.js"]
+}

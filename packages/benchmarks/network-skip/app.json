@@ -1,0 +1,5 @@
+{
+  "name": "network-skip",
+  "description": "Snapshot restore = 0 requests, 0 KiB — reload refetches everything",
+  "entry": ["node", "bench.js"]
+}

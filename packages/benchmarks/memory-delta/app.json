@@ -1,0 +1,5 @@
+{
+  "name": "memory-delta",
+  "description": "N background tabs ≈ delta memory, not N full pages",
+  "entry": ["node", "bench.js"]
+}

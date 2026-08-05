@@ -1,0 +1,5 @@
+{
+  "name": "restart",
+  "description": "Cold start from snapshot beats reload (state survives process death)",
+  "entry": ["node", "bench.js"]
+}

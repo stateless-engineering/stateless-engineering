@@ -1,0 +1,5 @@
+{
+  "name": "cpu-burn",
+  "description": "Away tabs burn zero CPU; timers throttled to death",
+  "entry": ["node", "bench.js"]
+}

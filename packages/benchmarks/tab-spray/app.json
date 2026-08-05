@@ -1,0 +1,5 @@
+{
+  "name": "tab-spray",
+  "description": "Hibernate N tabs ≈ 0 RSS while away; restore costs a fraction",
+  "entry": ["node", "bench.js"]
+}

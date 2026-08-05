@@ -1,0 +1,5 @@
+{
+  "name": "survival-matrix",
+  "description": "7/7 state classes survive snapshot restore vs 2-3/7 for reload",
+  "entry": ["node", "bench.js"]
+}

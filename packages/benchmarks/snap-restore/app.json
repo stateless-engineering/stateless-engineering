@@ -1,0 +1,5 @@
+{
+  "name": "snap-restore",
+  "description": "Progressive restore keeps JS/form/scroll state; reload loses it",
+  "entry": ["node", "bench.js"]
+}

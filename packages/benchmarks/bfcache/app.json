@@ -1,0 +1,5 @@
+{
+  "name": "bfcache",
+  "description": "Back/forward cache: frozen-page restore in ms vs full reload (43x)",
+  "entry": ["node", "bench.js"]
+}
