@@ -1,7 +1,7 @@
 name: Feature
 description: A new capability or improvement to build out from
 title: "[feature] "
-labels: ["feature"]
+labels: ["type/feature"]
 body:
   - type: textarea
     id: problem
