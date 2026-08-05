@@ -18,14 +18,18 @@ const findSystemChrome = () => CHROME_PATHS.find((p) => fs.existsSync(p));
 async function launch(opts = {}) {
   const exe = findSystemChrome();
   const base = exe ? { headless: true, executablePath: exe } : {};
+  // GitHub Actions runners disable unprivileged user namespaces, so the
+  // Chromium sandbox cannot start ("No usable sandbox!"). --no-sandbox is
+  // the documented CI workaround; local runs keep the sandbox.
+  const args = process.env.CI === 'true' ? ['--no-sandbox', '--disable-setuid-sandbox'] : [];
   try {
-    return await puppeteer.launch({ ...base, ...opts });
+    return await puppeteer.launch({ ...base, args, ...opts });
   } catch (err) {
     console.warn(
       'bundled chrome unavailable, falling back to chrome-headless-shell:',
       err.message.split('\n')[0]
     );
-    return puppeteer.launch({ headless: 'shell', ...opts });
+    return puppeteer.launch({ headless: 'shell', args, ...opts });
   }
 }
 
