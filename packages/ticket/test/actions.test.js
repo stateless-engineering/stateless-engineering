@@ -145,3 +145,29 @@ test('closed from triage (no status label) without resolution is reopened', () =
   });
   assert.ok(acts.some((a) => a.op === 'reopen'));
 });
+
+// ── closed-event shape (regression): GitHub sends state:"closed", so the
+// pre-close state must come from the status label, not flow.stateOf ────────
+
+const closedEvent = (labels, comments = [], prMerged = false) =>
+  lib.onClosed(issue({ state: 'closed', labels }), { comments, prMerged });
+
+test('closed event from review without lgtm/pr is blocked', () => {
+  const acts = closedEvent([{ name: 'status/review' }], [{ user: { login: 'x' }, body: 'almost' }]);
+  assert.ok(acts.some((a) => a.op === 'reopen'));
+  assert.ok(acts.some((a) => a.op === 'fail'));
+  assert.ok(acts.some((a) => a.op === 'comment' && /close blocked/.test(a.body)));
+});
+
+test('closed event from review with reviewer lgtm is allowed', () => {
+  const comments = [
+    { user: { login: 'rev' }, body: 'review requested: @rev' },
+    { user: { login: 'rev' }, body: 'lgtm' },
+  ];
+  assert.deepStrictEqual(closedEvent([{ name: 'status/review' }], comments), []);
+});
+
+test('closed event from triage reports triage, not done', () => {
+  const acts = closedEvent([{ name: 'type/feature' }], []);
+  assert.ok(acts.some((a) => a.op === 'comment' && /closed from \*\*triage\*\*/.test(a.body)));
+});

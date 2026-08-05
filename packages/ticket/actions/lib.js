@@ -10,6 +10,17 @@ const flow = require('../lib/flow.js');
 
 const TYPE_TITLE_RE = /^\[(bug|feature|security|chore|docs)\]\s/i;
 
+// Pre-close state derived from the status/* label, NOT flow.stateOf —
+// on a `closed` event GitHub has already flipped issue.state to "closed",
+// which stateOf maps to 'done'. The label is the machine's record of where
+// the ticket was when it was closed.
+function labelState(issue) {
+  const labels = (issue.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
+  const status = labels.find((l) => l && l.startsWith('status/'));
+  const name = status ? status.slice('status/'.length) : null;
+  return name && flow.STATES.includes(name) ? name : 'triage';
+}
+
 // Legitimate non-flow closes (wontfix, duplicate, not-planned, ...) carry a
 // resolution marker in a comment. Anything else closed outside the machine
 // gets reopened by the Action.
@@ -105,7 +116,7 @@ function onAssigned(issue, assigneeLogin) {
 // closed: enforce the machine. From review → require PR-merged or reviewer
 // lgtm. From anywhere else → require a resolution comment, else reopen.
 function onClosed(issue, { comments = [], prMerged = false } = {}) {
-  const state = flow.stateOf(issue);
+  const state = labelState(issue);
   const reviewer = flow.extractReviewer(comments);
 
   if (state === 'review') {
@@ -142,4 +153,4 @@ function onClosed(issue, { comments = [], prMerged = false } = {}) {
   ];
 }
 
-module.exports = { onOpened, onLabeled, onUnlabeled, onAssigned, onClosed, hygieneNeeds };
+module.exports = { onOpened, onLabeled, onUnlabeled, onAssigned, onClosed, hygieneNeeds, labelState };
