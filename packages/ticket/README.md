@@ -41,11 +41,21 @@ npm run ticket -- report --json         # stateless status board
 `.github/workflows/flow.yml` runs `actions/flow.js` on issue events (opened,
 labeled, unlabeled, assigned, closed): applies defaults (`priority/p2`),
 comments hygiene violations (missing `type/*` label, `[type] ` title prefix,
-missing acceptance criteria), announces status transitions, advances
-assignment from ready to in-progress, and blocks closes that skip the
-machine — reopening + red check unless a resolution comment or reviewer lgtm
-exists. Decision logic lives in `actions/lib.js` (pure, unit-tested); the
-runner executes via `gh` with `issues: write` only.
+missing acceptance criteria), **auto-triages** — once type + priority +
+acceptance are present, adds `status/ready` (the machine's own gate via
+`checkTransition`), announces status transitions, advances assignment from
+ready to in-progress, and blocks closes that skip the machine — reopening +
+red check unless the close passes `flow.checkClose` (review + PR-merged or
+reviewer lgtm, or an anchored resolution marker).
+
+`.github/workflows/pr.yml` runs `actions/pr-reconcile.js` on merged PRs:
+issues referenced by `#n` in the PR body/title get a sync comment with the
+merged PR + CI status, and issues in review are closed by the machine
+(merged PR satisfies the gate) with a `Resolution:` comment.
+
+Both delegate every gate to `lib/flow.js` (`checkTransition` /
+`checkClose`) — the state machine is the single source of truth; the
+actions only decide which mutations to perform.
 
 ## Stateless contract
 

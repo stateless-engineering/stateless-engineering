@@ -170,6 +170,44 @@ function allowedTransitions() {
   return out;
 }
 
+// ---- close enforcement (shared: CLI verbClose, the flow Action) ------------
+// Legitimate non-flow closes carry an anchored resolution marker: the CLI
+// posts "Resolution: …" on ticket close; maintainers close as wontfix /
+// duplicate / not planned. Unanchored matching is a trap — the Action's own
+// "without a resolution comment" text contains the word.
+const CLOSE_RESOLUTION_RE =
+  /^(resolution\s*:|wontfix|wont fix|duplicate|superseded|not planned|no longer needed|lgtm|fixed by|closes #|fixes #)/im;
+
+// Pre-close state derived from the status/* label, NOT stateOf — on a
+// `closed` event GitHub has already flipped issue.state to "closed", which
+// stateOf maps to 'done'. The label is the machine's record of where the
+// ticket was when it was closed.
+function labelState(issue) {
+  const labels = (issue.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
+  const status = labels.find((l) => l && l.startsWith('status/'));
+  const name = status ? status.slice('status/'.length) : null;
+  return name && STATES.includes(name) ? name : 'triage';
+}
+
+// The single close-enforcement. A close is legal from review with a merged
+// PR or reviewer lgtm; from anywhere else it needs an anchored resolution
+// marker. Returns { ok: true } or { ok: false, reason }.
+function checkClose(issue, { comments = [], prMerged = false } = {}) {
+  const state = labelState(issue);
+  const reviewer = extractReviewer(comments);
+  if (state === 'review') {
+    return checkTransition('review', 'done', { issue, reviewer, ctx: { comments, prMerged } });
+  }
+  const resolution = comments.some((c) => CLOSE_RESOLUTION_RE.test(c.body || ''));
+  if (resolution) return { ok: true };
+  return {
+    ok: false,
+    reason:
+      `closed from ${state} without a resolution comment or the review step ` +
+      '(flow: triage → ready → in-progress → review → close)',
+  };
+}
+
 // ---- deterministic sort ------------------------------------------------------
 // priority order (p0 < p1 < p2 < p3) → created_at asc → number asc.
 // Missing priority sorts as the org default (p2). Total, stable comparator.
@@ -221,6 +259,8 @@ module.exports = {
   transitions,
   checkTransition,
   allowedTransitions,
+  labelState,
+  checkClose,
   sortTickets,
   normalize,
 };

@@ -18,8 +18,8 @@ const issue = (over = {}) => ({
 
 // ── opened ────────────────────────────────────────────────────────────────
 
-test('opened: fully-typed ticket yields no actions', () => {
-  assert.deepStrictEqual(lib.onOpened(issue()), []);
+test('opened: fully-typed ticket auto-triages to ready', () => {
+  assert.deepStrictEqual(lib.onOpened(issue()), [{ op: 'label', name: 'status/ready' }]);
 });
 
 test('opened: untyped ticket gets hygiene comment + default priority', () => {
@@ -45,13 +45,14 @@ test('opened: typed non-feature without acceptance is fine (bug carries repro)',
 // ── labeled / unlabeled ───────────────────────────────────────────────────
 
 test('labeled: status/ready announces the transition', () => {
-  assert.deepStrictEqual(lib.onLabeled(issue(), 'status/ready'), [
+  const ready = issue({ labels: [{ name: 'status/ready' }, { name: 'type/feature' }, { name: 'priority/p2' }] });
+  assert.deepStrictEqual(lib.onLabeled(ready, 'status/ready'), [
     { op: 'comment', body: '→ **ready**' },
   ]);
 });
 
 test('labeled: unrelated label is ignored', () => {
-  assert.deepStrictEqual(lib.onLabeled(issue(), 'area/runtime'), []);
+  assert.deepStrictEqual(lib.onLabeled(issue({ labels: [{ name: 'type/feature' }] }), 'area/runtime'), []);
 });
 
 test('labeled: feature typed later without acceptance still warns', () => {
@@ -143,7 +144,7 @@ test('closed from ready without resolution is reopened', () => {
   });
   assert.ok(acts.some((a) => a.op === 'reopen'));
   assert.ok(acts.some((a) => a.op === 'fail'));
-  assert.ok(acts.some((a) => a.op === 'comment' && /closed from \*\*ready\*\*/.test(a.body)));
+  assert.ok(acts.some((a) => a.op === 'comment' && /closed from ready/.test(a.body)));
 });
 
 test('closed from triage (no status label) without resolution is reopened', () => {
@@ -177,5 +178,5 @@ test('closed event from review with reviewer lgtm is allowed', () => {
 
 test('closed event from triage reports triage, not done', () => {
   const acts = closedEvent([{ name: 'type/feature' }], []);
-  assert.ok(acts.some((a) => a.op === 'comment' && /closed from \*\*triage\*\*/.test(a.body)));
+  assert.ok(acts.some((a) => a.op === 'comment' && /closed from triage/.test(a.body)));
 });

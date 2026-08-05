@@ -196,18 +196,20 @@ async function verbReview(gh, opts, n) {
 
 async function verbClose(gh, opts, n) {
   const { issue, t } = await loadTicket(gh, n);
-  const reviewer = flow.extractReviewer(issue.comments);
   const prs = await gh.mergedPrsReferencing(n);
   const prMerged = prs.length > 0;
-  const reason = transitionOk(flow.checkTransition(t.status, 'done', {
-    issue, reviewer, ctx: { prMerged, comments: issue.comments },
-  }));
-  if (reason) fail(`cannot close #${n}: ${reason}`);
+  // The single close-enforcement (shared with the flow Action): review +
+  // PR-merged or reviewer lgtm.
+  const ok = flow.checkClose(issue, { comments: issue.comments, prMerged });
+  if (!ok.ok) fail(`cannot close #${n}: ${ok.reason}`);
+  const reviewer = flow.extractReviewer(issue.comments);
   const resolution = prMerged
     ? `Resolution: fixed in #${prs[0].number} (${prs[0].title}) — merged.`
     : `Resolution: reviewed and accepted (lgtm by @${reviewer || 'reviewer'}).`;
-  await gh.closeIssue(n);
+  // Comment BEFORE close: the flow Action's `closed` handler must observe
+  // the resolution marker or a legit close gets reopened.
   await gh.comment(n, resolution);
+  await gh.closeIssue(n);
   console.log(`#${n} → done: ${resolution}`);
 }
 

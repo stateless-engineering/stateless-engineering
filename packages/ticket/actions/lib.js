@@ -1,37 +1,18 @@
 'use strict';
 /**
- * actions/lib.js — pure decision logic for the flow Action (issue #7).
- * Given an issue event plus live context (comments, PR state), returns a
- * list of actions for the runner to execute. Zero side effects; unit-tested
- * with synthetic events. The state machine lives in ../lib/flow.js — this
- * module only decides *which* hygiene/transition actions to take.
+ * actions/lib.js — decision logic for the flow Action (issue #7).
+ * Pure, unit-tested. The state machine lives in ../lib/flow.js — this
+ * module only decides *which* hygiene/transition actions to take, and
+ * delegates every gate to the machine (checkTransition / checkClose).
  */
 const flow = require('../lib/flow.js');
 
 const TYPE_TITLE_RE = /^\[(bug|feature|security|chore|docs)\]\s/i;
 
-// Pre-close state derived from the status/* label, NOT flow.stateOf —
-// on a `closed` event GitHub has already flipped issue.state to "closed",
-// which stateOf maps to 'done'. The label is the machine's record of where
-// the ticket was when it was closed.
-function labelState(issue) {
-  const labels = (issue.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
-  const status = labels.find((l) => l && l.startsWith('status/'));
-  const name = status ? status.slice('status/'.length) : null;
-  return name && flow.STATES.includes(name) ? name : 'triage';
-}
-
-// Legitimate non-flow closes carry an anchored resolution marker: the CLI
-// posts "Resolution: …" on ticket close; maintainers close as wontfix /
-// duplicate / not planned. Unanchored matching is a trap — the Action's own
-// "closed from X without a resolution comment" text contains the word.
-const RESOLUTION_RE =
-  /^(resolution\s*:|wontfix|wont fix|duplicate|superseded|not planned|no longer needed|lgtm|fixed by|closes #|fixes #)/im;
-
 function hygieneNeeds(issue) {
   const needs = [];
   if (!flow.typeOf(issue)) {
-    needs.push('a type/* label (type/bug, type/feature, type/security, type/chore)');
+    needs.push('a type/* label (type/bug, type/feature, type/security, type/chore, type/docs)');
   }
   if (!TYPE_TITLE_RE.test(issue.title || '')) needs.push('a `[type] ` title prefix');
   if (flow.typeOf(issue) === 'feature' && !flow.hasAcceptance(issue.body)) {
@@ -40,9 +21,15 @@ function hygieneNeeds(issue) {
   return needs;
 }
 
+// The machine's triage gate: type + priority + acceptance → ready.
+function canAutoTriage(issue) {
+  return flow.checkTransition('triage', 'ready', { issue }).ok;
+}
+
 // ── event handlers ────────────────────────────────────────────────────────
 
-// opened: apply defaults (priority), comment hygiene violations.
+// opened: apply defaults (priority), comment hygiene violations, and
+// auto-triage when the gate already passes (typed + prioritized + acceptance).
 function onOpened(issue) {
   const acts = [];
   const needs = hygieneNeeds(issue);
@@ -58,10 +45,14 @@ function onOpened(issue) {
   if (!flow.priorityOf(issue)) {
     acts.push({ op: 'label', name: `priority/${flow.DEFAULT_PRIORITY}` });
   }
+  if (canAutoTriage(issue)) {
+    acts.push({ op: 'label', name: flow.STATUS_LABEL.ready });
+  }
   return acts;
 }
 
-// labeled: announce status transitions; re-check acceptance for features.
+// labeled: auto-triage on label additions (type/priority now present),
+// announce status transitions, re-check acceptance for features.
 function onLabeled(issue, labelName) {
   const acts = [];
   if (labelName && labelName.startsWith('status/')) {
@@ -78,6 +69,9 @@ function onLabeled(issue, labelName) {
         body: '**ticket hygiene:** `type/feature` requires acceptance criteria in the body (### Acceptance criteria).',
       });
     }
+  }
+  if (canAutoTriage(issue) && flow.stateOf(issue) === 'triage') {
+    acts.push({ op: 'label', name: flow.STATUS_LABEL.ready });
   }
   return acts;
 }
@@ -114,44 +108,21 @@ function onAssigned(issue, assigneeLogin) {
   return [];
 }
 
-// closed: enforce the machine. From review → require PR-merged or reviewer
-// lgtm. From anywhere else → require a resolution comment, else reopen.
+// closed: enforce the machine via flow.checkClose — review needs PR-merged
+// or reviewer lgtm; otherwise a resolution marker; else reopen + red check.
 function onClosed(issue, { comments = [], prMerged = false } = {}) {
-  const state = labelState(issue);
-  const reviewer = flow.extractReviewer(comments);
-
-  if (state === 'review') {
-    const ok = flow.checkTransition('review', 'done', {
-      issue,
-      reviewer,
-      ctx: { comments, prMerged },
-    });
-    if (ok.ok) return [];
-    return [
-      {
-        op: 'comment',
-        body:
-          `**close blocked:** ${ok.reason}. Reopening — resolve via the flow ` +
-          `(merge the linked PR, or \`ticket review #${issue.number}\` + reviewer lgtm).`,
-      },
-      { op: 'reopen' },
-      { op: 'fail' },
-    ];
-  }
-
-  const resolution = comments.some((c) => RESOLUTION_RE.test(c.body || ''));
-  if (resolution) return []; // legitimate not-planned / duplicate / wontfix close
-
+  const ok = flow.checkClose(issue, { comments, prMerged });
+  if (ok.ok) return [];
   return [
     {
       op: 'comment',
       body:
-        `closed from **${state}** without a resolution comment or the review step. Reopening — ` +
-        `the flow is triage → ready → in-progress → review → close (\`ticket close #${issue.number}\`).`,
+        `**close blocked:** ${ok.reason}. Reopening — resolve via the flow ` +
+        `(\`ticket close #${issue.number}\`).`,
     },
     { op: 'reopen' },
     { op: 'fail' },
   ];
 }
 
-module.exports = { onOpened, onLabeled, onUnlabeled, onAssigned, onClosed, hygieneNeeds, labelState };
+module.exports = { onOpened, onLabeled, onUnlabeled, onAssigned, onClosed, hygieneNeeds, canAutoTriage };
