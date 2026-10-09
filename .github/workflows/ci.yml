@@ -68,6 +68,21 @@ jobs:
         run: node packages/bench-runner/run.js packages/benchmarks --json --only bfcache,cpu-burn
         timeout-minutes: 10
 
+  stateless_inference:
+    name: stateless inference runner contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: run stateless-inference via published bench-runner
+        working-directory: packages/benchmarks
+        run: |
+          npx --yes @stateless-engineering/bench-runner . --only stateless-inference | tee "$RUNNER_TEMP/stateless-inference.log"
+          grep -q 'delta 4096 avoided' "$RUNNER_TEMP/stateless-inference.log"
+        timeout-minutes: 5
+
   webshell:
     name: webshell boot + endpoints
     runs-on: ubuntu-latest
