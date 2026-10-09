@@ -76,10 +76,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: run stateless-inference via published bench-runner
-        working-directory: packages/benchmarks
+      - name: run stateless-inference via monorepo bench-runner
         run: |
-          npx --yes @stateless-engineering/bench-runner . --only stateless-inference | tee "$RUNNER_TEMP/stateless-inference.log"
+          set -o pipefail
+          node packages/bench-runner/run.js packages/benchmarks --only stateless-inference | tee "$RUNNER_TEMP/stateless-inference.log"
           grep -q 'delta 4096 avoided' "$RUNNER_TEMP/stateless-inference.log"
         timeout-minutes: 5
 
