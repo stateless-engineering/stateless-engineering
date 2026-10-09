@@ -32,6 +32,7 @@ the gap:
 
 | Benchmark | What it shows |
 |-----------|---------------|
+| `stateless-inference/` | Cold projection: 4,096 operations; warm reuse: 0 (4,096 avoided), identical inference output (1,484,440). Deterministic operation counts, not a latency speedup. |
 | `snap-restore/` | Full reload vs snapshot restore: time, JS heap, scroll/form/JS-state preservation |
 | `memory-delta/` | Lifecycle memory spectrum: live → frozen → discarded → restored, process-tree RSS |
 | `bfcache/` | Real back/forward cache: instant back-nav keeps JS state; reload resets it |
@@ -103,3 +104,13 @@ automatically — sorted order, no registration needed.
 ## Organization
 
 [stateless-engineering](https://github.com/stateless-engineering)
+
+### Stateless inference (dependency-free)
+
+Run from `packages/benchmarks`:
+
+```bash
+node ../bench-runner/run.js . --only stateless-inference
+```
+
+CI proves **4,096 projection operations avoided on warm runs, identical inference output**. `durationMs: 0` is a placeholder, not a timing measurement. Real model-load, cache construction, memory and latency measurements on a P4000 are pending. The npm-distributed `npx @stateless-engineering/bench-runner` invocation is not yet verified; the checked-in runner is the reproducible path today.
